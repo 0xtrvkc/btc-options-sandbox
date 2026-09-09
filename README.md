@@ -1,6 +1,7 @@
 # BTC Options Sandbox
 
 A browser-based BTC range-risk research terminal for studying short strangle and short straddle setups using historical BTC price behavior.
+https://0xtrvkc.github.io/btc-options-sandbox/
 
 The default workflow is built around a **Friday 0DTE short-premium session**:
 
