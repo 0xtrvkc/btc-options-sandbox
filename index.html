@@ -1,0 +1,497 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="color-scheme" content="dark light" />
+<title>BTC VOL LAB — Range-Risk Research Terminal</title>
+<style>
+:root{
+  --bg:#06080a;--panel:#0b0f13;--panel2:#10161c;--panel3:#151c23;--ink:#d9e0e8;--muted:#77838f;--line:#27323c;
+  --accent:#d7ff3f;--cyan:#64dff5;--warn:#ffc85a;--bad:#ff6978;--good:#86f7a6;--purple:#c49cff;
+  --shadow:0 8px 28px rgba(0,0,0,.25);--mono:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+}
+[data-theme="light"]{
+  --bg:#eef1f4;--panel:#fff;--panel2:#f6f8fa;--panel3:#edf1f4;--ink:#14191f;--muted:#68717b;--line:#cfd6dd;
+  --accent:#557200;--cyan:#087e96;--warn:#986500;--bad:#b3263d;--good:#087c35;--purple:#7650a5;--shadow:0 8px 24px rgba(20,30,40,.08);
+}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--mono);font-size:13px;line-height:1.45}
+button,input,select{font:inherit;color:inherit}button{cursor:pointer}.app{min-height:100vh}.topbar{position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.topbar-inner{max-width:1700px;margin:auto;padding:10px 14px;display:flex;gap:12px;align-items:center;justify-content:space-between}.brand{display:flex;align-items:center;gap:12px;min-width:0}.brand-mark{width:10px;height:10px;background:var(--accent);box-shadow:0 0 16px color-mix(in srgb,var(--accent) 70%,transparent)}
+.brand h1{font-size:14px;margin:0;letter-spacing:.06em}.subtle{color:var(--muted)}.statusline{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}.pill{border:1px solid var(--line);padding:4px 7px;background:var(--panel);white-space:nowrap;font-size:10px}.pill b{color:var(--accent)}
+.iconbtn{border:1px solid var(--line);background:var(--panel);padding:5px 8px}.shell{max-width:1700px;margin:auto;padding:12px}.grid{display:grid;grid-template-columns:330px minmax(0,1fr);gap:12px}.stack{display:grid;gap:12px}.panel{background:var(--panel);border:1px solid var(--line);box-shadow:var(--shadow);min-width:0}.panel-head{min-height:34px;display:flex;gap:8px;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding:6px 10px;background:var(--panel2)}
+.panel-title{font-size:11px;letter-spacing:.09em;font-weight:700}.panel-body{padding:10px}.controls{position:sticky;top:57px;align-self:start;max-height:calc(100vh - 70px);overflow:auto}.field{display:grid;gap:5px;margin-bottom:10px}.field label{font-size:9px;letter-spacing:.07em;color:var(--muted);text-transform:uppercase}.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.ctrl{width:100%;background:var(--bg);border:1px solid var(--line);padding:8px 9px;outline:none}.ctrl:focus{border-color:var(--accent)}
+.rangebox{border:1px solid var(--line);background:var(--panel2);padding:9px;margin-bottom:10px}.rangeviz{display:grid;grid-template-columns:auto 1fr auto 1fr auto;align-items:center;gap:6px;margin-top:8px;color:var(--muted);font-size:10px}.rangeviz .bar{height:5px;background:linear-gradient(90deg,var(--bad),var(--line))}.rangeviz .bar.r{background:linear-gradient(90deg,var(--line),var(--bad))}.rangeviz .spot{color:var(--accent)}
+.btn{border:1px solid var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--panel));padding:8px 10px;width:100%;font-weight:700}.btn:hover{background:color-mix(in srgb,var(--accent) 20%,var(--panel))}.btn.secondary{border-color:var(--line);background:var(--panel2)}.tiny{font-size:9px;color:var(--muted)}
+.kpis{display:grid;grid-template-columns:repeat(6,minmax(120px,1fr));gap:1px;background:var(--line);border:1px solid var(--line)}.kpi{background:var(--panel);padding:10px;min-height:82px}.kpi .lab{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}.kpi .val{font-size:22px;line-height:1.15;margin-top:8px;white-space:nowrap}.kpi .foot{font-size:9px;color:var(--muted);margin-top:5px}.val.good{color:var(--good)}.val.bad{color:var(--bad)}.val.accent{color:var(--accent)}.val.warn{color:var(--warn)}
+.split{display:grid;grid-template-columns:1.25fr .75fr;gap:12px}.split-even{display:grid;grid-template-columns:1fr 1fr;gap:12px}.canvaswrap{height:315px;position:relative}.canvaswrap.short{height:250px}.canvaswrap.mini{height:220px}canvas{width:100%;height:100%;display:block}.stats{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line)}.stat{background:var(--panel);padding:9px;min-width:0}.stat .slabel{font-size:9px;color:var(--muted)}.stat .sval{font-size:14px;margin-top:4px;overflow-wrap:anywhere}
+.metric-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line)}.metric{background:var(--panel);padding:9px}.metric .m-label{font-size:9px;color:var(--muted)}.metric .m-value{font-size:16px;margin-top:4px}.metric .m-foot{font-size:8px;color:var(--muted);margin-top:3px}
+.heat-wrap{overflow:auto}.heat{border-collapse:separate;border-spacing:2px;width:100%;min-width:590px}.heat th,.heat td{text-align:center;padding:8px;font-size:10px}.heat th{color:var(--muted);font-weight:500}.heat td{border:1px solid var(--line);cursor:pointer;transition:.12s}.heat td:hover{outline:1px solid var(--accent);transform:translateY(-1px)}
+.legend{display:flex;gap:12px;align-items:center;flex-wrap:wrap;color:var(--muted);font-size:9px}.dot{width:8px;height:8px;display:inline-block;margin-right:4px}.dot.actual{background:var(--cyan)}.dot.normal{background:var(--accent)}.dot.lower{background:var(--bad)}.dot.inside{background:var(--good)}.dot.walk{background:var(--purple)}
+.table-wrap{overflow:auto;max-height:420px}.data-table{width:100%;border-collapse:collapse;min-width:980px}.data-table.compact{min-width:640px}.data-table th{position:sticky;top:0;background:var(--panel2);z-index:2;color:var(--muted);font-size:9px;text-align:right;padding:7px;border-bottom:1px solid var(--line);letter-spacing:.04em}.data-table td{text-align:right;padding:6px 7px;border-bottom:1px solid color-mix(in srgb,var(--line) 65%,transparent);font-size:10px}.data-table th:first-child,.data-table td:first-child{text-align:left}.data-table tbody tr:hover{background:var(--panel2)}
+.tag{padding:2px 5px;border:1px solid var(--line)}.tag.win{color:var(--good);border-color:color-mix(in srgb,var(--good) 50%,var(--line))}.tag.loss{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 50%,var(--line))}.tag.touch{color:var(--warn)}
+.model-note{padding:8px;border-left:2px solid var(--warn);background:color-mix(in srgb,var(--warn) 6%,transparent);font-size:9px;color:var(--muted)}.greeks{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line)}.greek{background:var(--panel);padding:10px}.greek .gname{font-size:9px;color:var(--muted)}.greek .gval{font-size:18px;margin-top:5px}.footbar{max-width:1700px;margin:0 auto;padding:8px 12px 18px;color:var(--muted);font-size:9px}.mono-accent{color:var(--accent)}.sep{height:1px;background:var(--line);margin:10px 0}.error{color:var(--bad)}.warningline{color:var(--warn)}
+.tabs{display:flex;gap:3px}.tab{padding:4px 7px;border:1px solid var(--line);background:var(--panel);font-size:9px;color:var(--muted)}.tab.active{color:var(--accent);border-color:var(--accent)}
+.summary-strip{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--line);border:1px solid var(--line)}.summary-strip>div{background:var(--panel);padding:8px}.summary-strip .l{font-size:8px;color:var(--muted)}.summary-strip .v{font-size:14px;margin-top:3px}.flexhead{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.select-mini{background:var(--bg);border:1px solid var(--line);padding:4px 6px;font-size:9px}.nowrap{white-space:nowrap}.goal-banner{border:1px solid var(--accent);background:color-mix(in srgb,var(--accent) 7%,var(--panel));padding:9px;margin-bottom:10px}.goal-title{font-size:10px;font-weight:700;color:var(--accent);letter-spacing:.07em}.goal-sub{font-size:9px;color:var(--muted);margin-top:4px}.session-note{border-left:2px solid var(--cyan);padding:7px 8px;background:color-mix(in srgb,var(--cyan) 5%,transparent);font-size:9px;color:var(--muted);margin-bottom:10px}.session-note b{color:var(--cyan)}
+.live-good{color:var(--good)!important}.live-warn{color:var(--warn)!important}.live-bad{color:var(--bad)!important}.live-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:currentColor;margin-right:5px;box-shadow:0 0 8px currentColor}.live-note{border-left:2px solid var(--good);padding:7px 8px;background:color-mix(in srgb,var(--good) 5%,transparent);font-size:9px;color:var(--muted);margin-top:10px}.live-note b{color:var(--good)}
+@media(max-width:1200px){.grid{grid-template-columns:1fr}.controls{position:static;max-height:none}.kpis{grid-template-columns:repeat(3,1fr)}.split,.split-even{grid-template-columns:1fr}}
+@media(max-width:760px){body{font-size:12px}.shell{padding:8px}.topbar-inner{padding:8px}.statusline .pill:nth-child(2){display:none}.kpis{grid-template-columns:repeat(2,1fr)}.kpi .val{font-size:18px}.row2,.row3{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}.metric-grid{grid-template-columns:repeat(2,1fr)}.summary-strip{grid-template-columns:repeat(2,1fr)}.greeks{grid-template-columns:repeat(2,1fr)}.canvaswrap{height:265px}.brand .subtle{display:none}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+<header class="topbar"><div class="topbar-inner">
+  <div class="brand"><span class="brand-mark"></span><h1>BTC VOL LAB <span class="subtle">/ RANGE-RISK RESEARCH TERMINAL</span></h1></div>
+  <div class="statusline">
+    <span class="pill">DATA <b id="dataStatus">LOADING</b></span>
+    <span class="pill">LIVE BTC <b id="latestSpot">—</b></span>
+    <span class="pill">FEED <b id="liveFeedStatus">CONNECTING</b></span>
+    <span class="pill" id="modePill">MODE <b>FRI 0DTE</b></span><span class="pill" id="overlapPill">SAMPLE <b>WEEKLY</b></span>
+    <button class="iconbtn" id="themeBtn" title="Toggle theme">◐</button>
+  </div>
+</div></header>
+
+<main class="shell"><div class="grid">
+<aside class="panel controls">
+  <div class="panel-head"><span class="panel-title">01 / TEST SPECIFICATION</span><span class="tiny">UTC · PRICE ONLY</span></div>
+  <div class="panel-body">
+    <div class="goal-banner"><div class="goal-title">DEFAULT GOAL / FRIDAY 0DTE SHORT PREMIUM</div><div class="goal-sub">Sell a short strangle or straddle on Friday and test whether BTC finishes inside your chosen range by the 08:00 UTC expiry. Price-only research; no historical option premium is assumed.</div></div>
+    <div class="field"><label>Research preset</label><select class="ctrl" id="researchMode"><option value="friday0dte" selected>Friday 0DTE — Deribit-style 08:00 UTC expiry</option><option value="weekend">Weekend benchmark — Fri 16:00 → Sun 08:00 UTC</option><option value="intraday">Custom same-day intraday</option><option value="multi">Multi-day legacy research</option></select></div>
+    <div class="field"><label>Strategy interpretation</label><select class="ctrl" id="strategy"><option value="strangle" selected>Short Strangle — OTM strike range</option><option value="straddle">Short Straddle — assumed breakeven band</option></select></div>
+    <div class="row2">
+      <div class="field"><label>Entry weekday</label><select class="ctrl" id="weekday"><option value="0">Sunday</option><option value="1">Monday</option><option value="2">Tuesday</option><option value="3">Wednesday</option><option value="4">Thursday</option><option value="5" selected>Friday</option><option value="6">Saturday</option></select></div>
+      <div class="field" id="legacyExpiryField"><label>Expiry horizon</label><select class="ctrl" id="expiry"><option value="1">1 day</option><option value="2">2 days</option><option value="3">3 days</option><option value="7" selected>7 days</option><option value="14">14 days</option><option value="30">30 days</option></select></div>
+    </div>
+    <div id="sessionControls">
+      <div class="row2">
+        <div class="field"><label>Entry mark UTC</label><select class="ctrl" id="entryHour"><option value="0" selected>00:00</option><option value="1">01:00</option><option value="2">02:00</option><option value="3">03:00</option><option value="4">04:00</option><option value="5">05:00</option><option value="6">06:00</option><option value="7">07:00</option><option value="8">08:00</option><option value="9">09:00</option><option value="10">10:00</option><option value="11">11:00</option><option value="12">12:00</option><option value="13">13:00</option><option value="14">14:00</option><option value="15">15:00</option><option value="16">16:00</option><option value="17">17:00</option><option value="18">18:00</option><option value="19">19:00</option><option value="20">20:00</option><option value="21">21:00</option><option value="22">22:00</option><option value="23">23:00</option></select></div>
+        <div class="field"><label>Expiry mark UTC</label><select class="ctrl" id="expiryHour"><option value="1">01:00</option><option value="2">02:00</option><option value="3">03:00</option><option value="4">04:00</option><option value="5">05:00</option><option value="6">06:00</option><option value="7">07:00</option><option value="8" selected>08:00</option><option value="9">09:00</option><option value="10">10:00</option><option value="11">11:00</option><option value="12">12:00</option><option value="13">13:00</option><option value="14">14:00</option><option value="15">15:00</option><option value="16">16:00</option><option value="17">17:00</option><option value="18">18:00</option><option value="19">19:00</option><option value="20">20:00</option><option value="21">21:00</option><option value="22">22:00</option><option value="23">23:00</option></select></div>
+      </div>
+      <div class="session-note" id="sessionNote"><b>0DTE proxy:</b> 00:00 → 08:00 UTC. Entry/expiry prices use the last completed hourly close before each mark; the real Deribit delivery price is a 07:30–08:00 TWAP and is not reconstructed here.</div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Evaluation lookback</label><select class="ctrl" id="lookback"><option value="1">1 year</option><option value="2">2 years</option><option value="4">4 years</option><option value="8">8 years</option><option value="all" selected>All available</option></select></div>
+      <div class="field"><label>Regime filter</label><select class="ctrl" id="regime"><option value="all">All regimes</option><option value="rvLow">RV30 low tercile</option><option value="rvMid">RV30 middle tercile</option><option value="rvHigh">RV30 high tercile</option><option value="above200">Above 200D MA</option><option value="below200">Below 200D MA</option><option value="momPos">30D momentum +</option><option value="momNeg">30D momentum −</option><option value="dd10">Drawdown &lt;10%</option><option value="dd20">Drawdown &gt;20%</option></select></div>
+    </div>
+
+    <div class="field" id="rangeMethodField"><label>Strike range method</label><select class="ctrl" id="rangeMethod"><option value="manual">Manual distances</option><option value="equalTail">Empirical equal-tail</option><option value="minWidth">Empirical minimum-width</option></select></div>
+    <div class="row2" id="autoRangeControls" style="display:none">
+      <div class="field"><label>Target containment</label><select class="ctrl" id="targetCoverage"><option value="0.5">50%</option><option value="0.6">60%</option><option value="0.7">70%</option><option value="0.8" selected>80%</option><option value="0.9">90%</option><option value="0.95">95%</option></select></div>
+      <div class="field"><label>Auto range sample</label><input class="ctrl" value="Current filtered sample" disabled /></div>
+    </div>
+
+    <div class="rangebox" id="strangleBox">
+      <div class="row2">
+        <div class="field" style="margin:0"><label>Put strike distance</label><input class="ctrl" id="lowerPct" type="number" value="-2" step="0.5" max="0" /></div>
+        <div class="field" style="margin:0"><label>Call strike distance</label><input class="ctrl" id="upperPct" type="number" value="2" step="0.5" min="0" /></div>
+      </div>
+      <div class="rangeviz"><span id="lowerViz">-2%</span><span class="bar"></span><span class="spot">SPOT</span><span class="bar r"></span><span id="upperViz">+2%</span></div>
+      <div class="tiny" id="rangeSource" style="margin-top:7px">Manual strike distances.</div>
+    </div>
+
+    <div class="rangebox" id="straddleBox" style="display:none">
+      <div class="field" style="margin:0"><label>Assumed total premium / BE half-width (% spot)</label><input class="ctrl" id="straddleCreditPct" type="number" value="5" step="0.25" min="0.1" /></div>
+      <div class="tiny" style="margin-top:7px">Price-only proxy: containment means expiry inside spot ± assumed credit. No historical premium is inferred.</div>
+    </div>
+
+    <div class="sep"></div>
+    <div class="field"><label>Walk-forward training window</label><select class="ctrl" id="trainWeeks"><option value="26">26 weeks</option><option value="52" selected>52 weeks</option><option value="104">104 weeks</option><option value="208">208 weeks</option><option value="all">All prior history</option></select></div>
+    <div class="row2">
+      <div class="field"><label>Walk-forward model</label><select class="ctrl" id="wfMethod"><option value="equalTail">Equal-tail</option><option value="minWidth">Minimum-width</option></select></div>
+      <div class="field"><label>WF target</label><select class="ctrl" id="wfTarget"><option value="0.5">50%</option><option value="0.6">60%</option><option value="0.7">70%</option><option value="0.8" selected>80%</option><option value="0.9">90%</option><option value="0.95">95%</option></select></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Bootstrap</label><select class="ctrl" id="bootstrapMode"><option value="block" selected>Moving block</option><option value="iid">IID</option></select></div>
+      <div class="field"><label>Block length</label><select class="ctrl" id="blockLen"><option value="2">2 trades</option><option value="4" selected>4 trades</option><option value="8">8 trades</option></select></div>
+    </div>
+    <div class="field"><label>Chronological holdout</label><select class="ctrl" id="holdoutPct"><option value="0.2">Latest 20%</option><option value="0.3" selected>Latest 30%</option><option value="0.4">Latest 40%</option></select></div>
+
+    <div class="sep"></div>
+    <div class="field"><label>Hypothetical total credit (% of spot)</label><input class="ctrl" id="creditPct" type="number" value="2" min="0" step="0.1" /></div>
+    <div class="row2">
+      <div class="field"><label>Model IV annualized</label><input class="ctrl" id="ivPct" type="number" value="55" min="1" step="1" /></div>
+      <div class="field"><label>Risk-free rate</label><input class="ctrl" id="rfPct" type="number" value="0" step="0.25" /></div>
+    </div>
+    <button class="btn" id="runBtn">RUN RESEARCH</button><button class="btn secondary" id="defaultBtn" style="margin-top:7px">RESET TO FRIDAY 0DTE DEFAULT</button>
+    <div class="model-note" style="margin-top:10px">Historical sections use BTC prices only. “Containment” is not option profitability. Payoff/Greeks use manual hypothetical inputs and are deliberately kept separate.</div>
+  </div>
+</aside>
+
+<section class="stack">
+  <div class="kpis">
+    <div class="kpi"><div class="lab">Expiry containment</div><div class="val good" id="kWin">—</div><div class="foot" id="kWinFoot">finish inside range</div></div>
+    <div class="kpi"><div class="lab">No-touch proxy</div><div class="val accent" id="kNoTouch">—</div><div class="foot" id="kTouchFoot">path remains inside</div></div>
+    <div class="kpi"><div class="lab">Touched + recovered</div><div class="val warn" id="kRecovered">—</div><div class="foot">left range, expired inside</div></div>
+    <div class="kpi"><div class="lab">Lower / upper breach</div><div class="val bad" id="kBreach">—</div><div class="foot">expiry tail split</div></div>
+    <div class="kpi"><div class="lab">Effective N</div><div class="val" id="kN">—</div><div class="foot" id="kPeriod">raw / adjusted sample</div></div>
+    <div class="kpi"><div class="lab">Horizon σ</div><div class="val" id="kSigma">—</div><div class="foot">expiry-return std. dev.</div></div>
+  </div>
+
+  <section class="panel" id="zeroDtePanel">
+    <div class="panel-head"><span class="panel-title">02 / FRIDAY 0DTE DESK</span><span class="tiny" id="zeroDteDeskLabel">00:00 → 08:00 UTC · HOURLY-CLOSE PROXY</span></div>
+    <div class="panel-body"><div class="metric-grid" id="zeroDteGrid"></div><div class="model-note" style="margin-top:10px" id="settlementProxyNote">Actual Deribit delivery uses the 07:30–08:00 UTC index TWAP. This dashboard only has hourly BTC closes, so expiry containment is evaluated with the last completed 1H close before 08:00 UTC. Treat this as a historical price-range proxy, not exact exchange settlement replication.</div></div>
+  </section>
+
+  <section class="panel" id="livePanel">
+    <div class="panel-head"><span class="panel-title">02B / LIVE SESSION MONITOR</span><span class="tiny" id="livePanelLabel">PUBLIC BTC MARKET FEED · NO API KEY</span></div>
+    <div class="panel-body">
+      <div class="metric-grid" id="liveGrid"></div>
+      <div class="live-note"><b>Separation rule:</b> live BTC is used only for current-session monitoring, current dollar strikes, payoff/Greeks and preview values. Historical containment, calibration, walk-forward, holdout, distributions and regime statistics continue to use repository history only. Live feed is Binance BTCUSDT as a market reference, not the Deribit index or settlement TWAP.</div>
+    </div>
+  </section>
+
+  <div class="split">
+    <section class="panel">
+      <div class="panel-head"><span class="panel-title">03 / EXPIRY RETURN DISTRIBUTION</span><div class="flexhead"><select class="select-mini" id="distView"><option value="hist">HISTOGRAM</option><option value="ecdf">ECDF</option><option value="qq">NORMAL Q-Q</option></select><div class="legend"><span><i class="dot actual"></i>EMPIRICAL</span><span><i class="dot normal"></i>NORMAL</span></div></div></div>
+      <div class="panel-body"><div class="canvaswrap"><canvas id="distCanvas"></canvas></div></div>
+    </section>
+    <section class="panel">
+      <div class="panel-head"><span class="panel-title">04 / DESCRIPTIVES + DIAGNOSTICS</span><span class="tiny">SPSS-LIKE SUMMARY</span></div>
+      <div class="panel-body"><div class="stats" id="statsGrid"></div></div>
+    </section>
+  </div>
+
+  <section class="panel">
+    <div class="panel-head"><span class="panel-title">05 / BREACH & PATH RISK</span><span class="tiny">WHAT HAPPENS WHEN THE RANGE FAILS?</span></div>
+    <div class="panel-body"><div class="metric-grid" id="riskGrid"></div></div>
+  </section>
+
+  <div class="split-even">
+    <section class="panel">
+      <div class="panel-head"><span class="panel-title">06 / WALK-FORWARD OUT-OF-SAMPLE</span><span class="tiny">NO FUTURE DATA IN TRAINING</span></div>
+      <div class="panel-body">
+        <div class="summary-strip" id="wfSummary"></div>
+        <div class="canvaswrap mini"><canvas id="wfCanvas"></canvas></div>
+        <div class="tiny">Each historical entry estimates its range only from trades whose expiry occurred before that entry. Minimum training sample: 20.</div>
+      </div>
+    </section>
+    <section class="panel">
+      <div class="panel-head"><span class="panel-title">07 / CALIBRATION</span><span class="tiny">TARGET VS OBSERVED WALK-FORWARD CONTAINMENT</span></div>
+      <div class="panel-body"><div class="canvaswrap mini"><canvas id="calCanvas"></canvas></div><div class="tiny" id="calNote">—</div></div>
+    </section>
+  </div>
+
+  <div class="split-even">
+    <section class="panel">
+      <div class="panel-head"><span class="panel-title">08 / ROLLING STABILITY</span><span class="tiny">52-TRADE ROLLING CONTAINMENT</span></div>
+      <div class="panel-body"><div class="canvaswrap mini"><canvas id="rollingCanvas"></canvas></div></div>
+    </section>
+    <section class="panel">
+      <div class="panel-head"><span class="panel-title">09 / REALIZED VOL REGIME</span><span class="tiny">CURRENT MARKET CONTEXT</span></div>
+      <div class="panel-body"><div class="metric-grid" id="volGrid"></div><div class="canvaswrap mini"><canvas id="volCanvas"></canvas></div></div>
+    </section>
+  </div>
+
+  <section class="panel">
+    <div class="panel-head"><span class="panel-title">10 / STRIKE-DISTANCE HEATMAP</span><div class="flexhead"><select class="select-mini" id="heatMetric"><option value="inside">EXPIRY CONTAINMENT</option><option value="noTouch">NO-TOUCH PROXY</option><option value="lower">LOWER BREACH</option><option value="upper">UPPER BREACH</option><option value="severity">MEAN BREACH SEVERITY</option></select><span class="tiny">CLICK CELL TO APPLY</span></div></div>
+    <div class="panel-body"><div class="heat-wrap"><table class="heat" id="heatTable"></table></div></div>
+  </section>
+
+  <div class="split-even">
+    <section class="panel">
+      <div class="panel-head"><span class="panel-title">11 / DAY-OF-WEEK STUDY</span><span class="tiny">SAME RANGE + HORIZON</span></div>
+      <div class="panel-body"><div class="table-wrap" style="max-height:290px"><table class="data-table compact"><thead><tr><th>ENTRY DAY</th><th>N</th><th>CONTAINMENT</th><th>NO-TOUCH PROXY</th><th>LOWER</th><th>UPPER</th></tr></thead><tbody id="dowBody"></tbody></table></div></div>
+    </section>
+    <section class="panel">
+      <div class="panel-head"><span class="panel-title">12 / HORIZON × RANGE SURFACE</span><span class="tiny">SYMMETRIC DISTANCE</span></div>
+      <div class="panel-body"><div class="heat-wrap"><table class="heat" id="horizonTable"></table></div></div>
+    </section>
+  </div>
+
+  <section class="panel" id="sensitivityPanel">
+    <div class="panel-head"><span class="panel-title">13 / FRIDAY ENTRY-TIME SENSITIVITY</span><span class="tiny">SAME EXPIRY · SELECTED RANGE · 1H CLOSE PROXY</span></div>
+    <div class="panel-body"><div class="table-wrap" style="max-height:320px"><table class="data-table compact"><thead><tr><th>ENTRY UTC</th><th>HOLD</th><th>N</th><th>CONTAINMENT</th><th>NO-TOUCH PROXY</th><th>σ</th><th>5TH / 95TH</th></tr></thead><tbody id="sensitivityBody"></tbody></table></div></div>
+  </section>
+
+  <section class="panel" id="benchmarkPanel">
+    <div class="panel-head"><span class="panel-title">14 / DERIBIT-STYLE WEEKEND BENCHMARK</span><span class="tiny">PRICE-BEHAVIOR CONTROL · NO OPTION P&amp;L</span></div>
+    <div class="panel-body">
+      <div class="metric-grid" id="benchmarkGrid"></div>
+      <div class="model-note" style="margin-top:10px">Control experiment inspired by Deribit Insights: compare your Friday 00:00→08:00 0DTE session with Friday 16:00→Sunday 08:00 (~40h). Same BTC price history and selected percentage range; no historical delta, premium, fees, slippage, APR, or option P&amp;L is inferred. <a href="https://insights.deribit.com/education/option-backtest-selling-weekend-vol/" target="_blank" rel="noopener">Original study</a> · <a href="https://insights.deribit.com/education/option-backtest-selling-weekend-vol-revisited/" target="_blank" rel="noopener">Revisited</a>.</div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><span class="panel-title">15 / REQUIRED RANGE LADDER</span><span class="tiny">HOW WIDE DID BTC HISTORICALLY NEED?</span></div>
+    <div class="panel-body"><div class="table-wrap"><table class="data-table compact"><thead><tr><th>TARGET</th><th>0DTE EQUAL-TAIL</th><th>0DTE MIN-WIDTH</th><th>0DTE SYMMETRIC</th><th>WEEKEND SYMMETRIC</th></tr></thead><tbody id="rangeLadderBody"></tbody></table></div><div class="tiny" style="margin-top:8px">Symmetric width is the empirical percentile of |return|. For a price-only short straddle proxy, this is also the historical breakeven half-width required to contain that fraction of expiries.</div></div>
+  </section>
+
+  <div class="split-even">
+    <section class="panel">
+      <div class="panel-head"><span class="panel-title">16 / PARAMETER ROBUSTNESS</span><span class="tiny">ENTRY TIME × RANGE WIDTH</span></div>
+      <div class="panel-body"><div class="heat-wrap"><table class="heat" id="robustTable"></table></div><div class="tiny" id="robustNote" style="margin-top:8px">—</div></div>
+    </section>
+    <section class="panel">
+      <div class="panel-head"><span class="panel-title">17 / HOLDOUT + TAIL CONCENTRATION</span><span class="tiny">REVISITED-STYLE STABILITY CHECK</span></div>
+      <div class="panel-body"><div class="metric-grid" id="holdoutTailGrid"></div></div>
+    </section>
+  </div>
+
+  <div class="split">
+    <section class="panel">
+      <div class="panel-head"><span class="panel-title">18 / HYPOTHETICAL EXPIRY PAYOFF</span><span class="tiny">1 BTC NOTIONAL · USER CREDIT</span></div>
+      <div class="panel-body"><div class="canvaswrap short"><canvas id="payoffCanvas"></canvas></div></div>
+    </section>
+    <section class="panel">
+      <div class="panel-head"><span class="panel-title">19 / MODEL GREEKS</span><span class="tiny">BLACK-SCHOLES · SHORT POSITION</span></div>
+      <div class="panel-body">
+        <div class="greeks"><div class="greek"><div class="gname">NET Δ</div><div class="gval" id="gDelta">—</div></div><div class="greek"><div class="gname">NET Γ</div><div class="gval" id="gGamma">—</div></div><div class="greek"><div class="gname">NET Θ / DAY</div><div class="gval" id="gTheta">—</div></div><div class="greek"><div class="gname">NET VEGA / 1 VOL</div><div class="gval" id="gVega">—</div></div></div>
+        <div class="stats" style="margin-top:10px"><div class="stat"><div class="slabel">MODEL PUT STRIKE</div><div class="sval" id="mPut">—</div></div><div class="stat"><div class="slabel">MODEL CALL STRIKE</div><div class="sval" id="mCall">—</div></div><div class="stat"><div class="slabel">USER CREDIT</div><div class="sval" id="mCredit">—</div></div><div class="stat"><div class="slabel">MODEL BE RANGE</div><div class="sval" id="mBE">—</div></div></div>
+        <div class="model-note" style="margin-top:10px">Greeks use live BTC when available, fixed entry-anchored strikes during an active session, manual IV/rate, and remaining time to expiry. They are theoretical diagnostics, not reconstructed historical Greeks.</div>
+      </div>
+    </section>
+  </div>
+
+  <section class="panel">
+    <div class="panel-head"><span class="panel-title">20 / HISTORICAL CASES</span><span class="tiny" id="caseLabel">—</span></div>
+    <div class="table-wrap"><table class="data-table"><thead><tr><th>ENTRY</th><th>ENTRY BTC</th><th>EXPIRY</th><th>RETURN</th><th>LOW / HIGH</th><th>PATH MIN / MAX</th><th>FIRST TOUCH</th><th>BREACH</th><th>RESULT</th></tr></thead><tbody id="caseBody"></tbody></table></div>
+  </section>
+</section>
+</div></main>
+<footer class="footbar">BTC VOL LAB · Default: Friday 0DTE short-premium range research. Price-only research terminal. Containment/no-touch statistics describe BTC range behavior, not option P&amp;L. Walk-forward ranges are formed only from information available before each historical entry. Deribit-style weekend/robustness panels are price-behavior controls only. Live BTC affects current-session/model displays only; historical research remains repository-data-only. Hypothetical payoff/Greeks are model diagnostics.</footer>
+</div>
+<script>
+(() => {
+'use strict';
+const REPO='0xtrvkc/dynamic-btc-analytics-dashboard';
+const SOURCES={
+  daily:[`./btc_daily_price.json`,`https://cdn.jsdelivr.net/gh/${REPO}@main/btc_daily_price.json`,`https://raw.githubusercontent.com/${REPO}/main/btc_daily_price.json`],
+  intraday:[`./btc_1h_price.json`,`https://cdn.jsdelivr.net/gh/${REPO}@main/btc_1h_price.json`,`https://raw.githubusercontent.com/${REPO}/main/btc_1h_price.json`,`./btc_4h_price.json`,`https://cdn.jsdelivr.net/gh/${REPO}@main/btc_4h_price.json`,`https://raw.githubusercontent.com/${REPO}/main/btc_4h_price.json`]
+};
+const $=id=>document.getElementById(id), HOUR=36e5, DAY=864e5;
+const state={daily:[],intraday:[],intradayHours:NaN,pathLabel:'daily observations',latest:null,latestIntraday:null,features:[],baseAll:[],baseEval:[],records:[],range:{lo:-2,hi:2},wf:[],cal:[],live:{price:NaN,ts:NaN,source:'',status:'CONNECTING',ws:null,retry:0,renderTimer:null,entryPrice:NaN,entryTs:NaN,anchorSource:'preview'}};
+const fmtUSD=x=>Number.isFinite(x)?'$'+Math.round(x).toLocaleString('en-US'):'—';
+const fmtPct=(x,d=2)=>Number.isFinite(x)?(x>=0?'+':'')+x.toFixed(d)+'%':'—';
+const fmtRate=(x,d=1)=>Number.isFinite(x)?(x*100).toFixed(d)+'%':'—';
+const fnum=(x,d=3)=>Number.isFinite(x)?x.toFixed(d):'—';
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const date=ts=>new Date(ts).toISOString().slice(0,10);
+const weekdayNames=['SUN','MON','TUE','WED','THU','FRI','SAT'];
+
+function parseTs(v){
+  if(v==null)return NaN;if(typeof v==='number')return v<1e12?v*1000:v;const s=String(v).trim();
+  if(/^\d{10,13}$/.test(s)){const n=+s;return n<1e12?n*1000:n;}let iso=s;
+  if(/^\d{4}-\d{2}-\d{2}$/.test(iso))iso+='T00:00:00Z';else if(/^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?$/.test(iso))iso=iso.replace(' ','T')+'Z';return Date.parse(iso);
+}
+function pick(o,names){for(const n of names)if(o&&o[n]!=null&&Number.isFinite(+o[n]))return +o[n];return NaN;}
+function normalize(raw){
+  let rows=[];if(Array.isArray(raw))rows=raw.map((v,i)=>[i,v]);else if(raw&&Array.isArray(raw.data))rows=raw.data.map((v,i)=>[i,v]);else if(raw&&typeof raw==='object')rows=Object.entries(raw);
+  const out=[];for(const [k,v] of rows){
+    if(typeof v==='number'||typeof v==='string'){const px=+v,ts=parseTs(k);if(Number.isFinite(px)&&Number.isFinite(ts))out.push({ts,close:px,high:px,low:px});continue;}
+    if(Array.isArray(v)){const ts=parseTs(v[0]??k),close=+(v[4]??v[1]),high=+(v[2]??close),low=+(v[3]??close);if(Number.isFinite(ts)&&Number.isFinite(close))out.push({ts,close,high:Number.isFinite(high)?high:close,low:Number.isFinite(low)?low:close});continue;}
+    if(v&&typeof v==='object'){const ts=parseTs(v.date??v.datetime??v.time??v.timestamp??v.ts??k),close=pick(v,['close','Close','price','value','c']),high=pick(v,['high','High','h']),low=pick(v,['low','Low','l']);if(Number.isFinite(ts)&&Number.isFinite(close))out.push({ts,close,high:Number.isFinite(high)?high:close,low:Number.isFinite(low)?low:close});}
+  }
+  out.sort((a,b)=>a.ts-b.ts);return out.filter((x,i,a)=>i===0||x.ts!==a[i-1].ts);
+}
+async function fetchFirst(urls){let lastErr;for(const url of urls){try{const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw new Error(r.status);const j=await r.json(),n=normalize(j);if(n.length>20)return{data:n,url};}catch(e){lastErr=e;}}throw lastErr||new Error('No source loaded');}
+async function loadData(){
+  $('dataStatus').textContent='LOADING';try{
+    const d=await fetchFirst(SOURCES.daily);state.daily=d.data;state.latest=state.daily.at(-1);if(!Number.isFinite(state.live.price))$('latestSpot').textContent=fmtUSD(state.latest.close);
+    try{const x=await fetchFirst(SOURCES.intraday);state.intraday=x.data;state.latestIntraday=state.intraday.at(-1);if(!Number.isFinite(state.live.price))$('latestSpot').textContent=fmtUSD(state.latestIntraday.close);const hours=median(diffHours(state.intraday));state.intradayHours=hours;state.pathLabel=(hours<2?'~1h close':hours<6?'~4h close':'intraday close')+' observations';}catch(_){state.intraday=[];state.intradayHours=NaN;state.pathLabel='daily observations';}
+    computeFeatures();$('dataStatus').textContent=state.intraday.length?`OK · ${state.daily.length.toLocaleString()}D · ${state.intraday.length.toLocaleString()} INTRA`:`OK · ${state.daily.length.toLocaleString()}D`;$('dataStatus').style.color='var(--good)';run();
+  }catch(e){$('dataStatus').textContent='FAILED';$('dataStatus').classList.add('error');$('caseLabel').textContent='Could not load repository price JSON. Serve this file from the repo root or check network access.';console.error(e);}
+}
+function diffHours(a){const z=[];for(let i=1;i<a.length&&i<250;i++)z.push((a[i].ts-a[i-1].ts)/36e5);return z.filter(x=>x>0&&x<100);}
+function mean(a){return a.length?a.reduce((s,x)=>s+x,0)/a.length:NaN;}
+function variance(a){if(a.length<2)return NaN;const m=mean(a);return a.reduce((s,x)=>s+(x-m)**2,0)/(a.length-1);}
+function sd(a){return Math.sqrt(variance(a));}
+function median(a){return quantile(a,.5);}
+function quantile(a,q){if(!a.length)return NaN;const s=[...a].filter(Number.isFinite).sort((x,y)=>x-y);if(!s.length)return NaN;const p=(s.length-1)*clamp(q,0,1),b=Math.floor(p),r=p-b;return s[b]+(s[Math.min(b+1,s.length-1)]-s[b])*r;}
+function skewness(a){if(a.length<3)return NaN;const m=mean(a),s=Math.sqrt(a.reduce((z,x)=>z+(x-m)**2,0)/a.length);if(!s)return 0;return a.reduce((z,x)=>z+((x-m)/s)**3,0)/a.length;}
+function excessKurtosis(a){if(a.length<4)return NaN;const m=mean(a),s=Math.sqrt(a.reduce((z,x)=>z+(x-m)**2,0)/a.length);if(!s)return 0;return a.reduce((z,x)=>z+((x-m)/s)**4,0)/a.length-3;}
+function autocorr(a,lag=1){const x=a.filter(Number.isFinite);if(x.length<=lag+2)return NaN;const m=mean(x),den=x.reduce((s,v)=>s+(v-m)**2,0);if(!den)return 0;let num=0;for(let i=lag;i<x.length;i++)num+=(x[i]-m)*(x[i-lag]-m);return num/den;}
+function bisectAtOrAfter(arr,ts){let l=0,r=arr.length;while(l<r){const m=(l+r)>>1;if(arr[m].ts<ts)l=m+1;else r=m;}return l;}
+function scanPath(src,startTs,endTs,entryClose){let i=bisectAtOrAfter(src,startTs),mn=Infinity,mx=-Infinity,n=0;while(i<src.length&&src[i].ts<=endTs){const x=src[i];mn=Math.min(mn,x.low??x.close);mx=Math.max(mx,x.high??x.close);n++;i++;}return{min:n?mn:entryClose,max:n?mx:entryClose,n};}
+function pathExtrema(startTs,endTs,entryClose){
+  /* Daily JSON keys represent each calendar day's close. For intraday path tests,
+     entry happens after the entry day's bars and expiry includes the expiry day. */
+  const x=state.intraday, intradayStart=startTs+DAY, intradayEnd=endTs+DAY-1;
+  if(x.length&&intradayStart>=x[0].ts&&intradayEnd<=x.at(-1).ts){const p=scanPath(x,intradayStart,intradayEnd,entryClose);if(p.n>0)return{...p,source:'intraday'};}
+  return{...scanPath(state.daily,startTs+1,endTs,entryClose),source:'daily'};
+}
+function firstTouch(rec,lo,hi){
+  const lowPx=rec.entry*(1+lo/100),highPx=rec.entry*(1+hi/100);
+  if(rec.session){const src=state.intraday,start=rec.entryTs,end=rec.expiryTs-1,barHours=Number.isFinite(state.intradayHours)?state.intradayHours:1;let i=bisectAtOrAfter(src,start);while(i<src.length&&src[i].ts<=end){const px=src[i].close;if(px<lowPx||px>highPx){return{side:px<lowPx?'PUT':'CALL',hours:Math.max(0,(src[i].ts+barHours*HOUR-rec.entryTs)/HOUR),source:'intraday-close'};}i++;}return null;}
+  let src=state.daily,source='daily',scanStart=rec.entryTs+1,scanEnd=rec.expiryTs;const intradayStart=rec.entryTs+DAY,intradayEnd=rec.expiryTs+DAY-1;if(state.intraday.length&&intradayStart>=state.intraday[0].ts&&intradayEnd<=state.intraday.at(-1).ts){src=state.intraday;source='intraday';scanStart=intradayStart;scanEnd=intradayEnd;}let i=bisectAtOrAfter(src,scanStart),first=null;while(i<src.length&&src[i].ts<=scanEnd){const x=src[i],l=x.low??x.close,h=x.high??x.close;if(l<lowPx||h>highPx){let side='BOTH';if(l<lowPx&&!(h>highPx))side='PUT';else if(h>highPx&&!(l<lowPx))side='CALL';const elapsedHours=source==='intraday'?(x.ts-intradayStart)/HOUR:(x.ts-rec.entryTs)/HOUR;first={side,hours:Math.max(0,elapsedHours),source};break;}i++;}return first;
+}
+function rollingRVAt(i,days){if(i<days)return NaN;const r=[];for(let j=i-days+1;j<=i;j++){const a=state.daily[j-1]?.close,b=state.daily[j]?.close;if(a>0&&b>0)r.push(Math.log(b/a));}return r.length>1?sd(r)*Math.sqrt(365)*100:NaN;}
+function computeFeatures(){
+  const d=state.daily,n=d.length;state.features=Array(n);let ath=-Infinity;const rv30=[];
+  for(let i=0;i<n;i++){
+    ath=Math.max(ath,d[i].close);const ma200=i>=199?mean(d.slice(i-199,i+1).map(x=>x.close)):NaN;const mom30=i>=30?(d[i].close/d[i-30].close-1)*100:NaN;const rv=rollingRVAt(i,30);rv30.push(rv);
+    const histRV=rv30.slice(Math.max(0,i-365),i).filter(Number.isFinite);const rvPct=Number.isFinite(rv)&&histRV.length>=30?histRV.filter(x=>x<=rv).length/histRV.length:NaN;
+    state.features[i]={rv30:rv,rvPct,ma200,mom30,drawdown:(d[i].close/ath-1)*100};
+  }
+}
+function settings(){
+  const mode=$('researchMode').value,strategy=$('strategy').value,expiry=+$('expiry').value;let weekday=+$('weekday').value,entryHour=+$('entryHour').value,expiryHour=+$('expiryHour').value;let lo=+$('lowerPct').value,hi=+$('upperPct').value;if(lo>0)lo=-Math.abs(lo);if(hi<0)hi=Math.abs(hi);
+  if(mode==='friday0dte'){weekday=5;expiryHour=8;if(entryHour>=8)entryHour=0;}
+  if(mode==='weekend'){weekday=5;entryHour=16;expiryHour=8;}
+  if(strategy==='straddle'){const c=Math.abs(+$('straddleCreditPct').value||0);lo=-c;hi=c;}
+  const sessionHours=mode==='weekend'?40:Math.max(0,expiryHour-entryHour);
+  return{mode,strategy,expiry,weekday,entryHour,expiryHour,sessionHours,lookback:$('lookback').value,regime:$('regime').value,rangeMethod:$('rangeMethod').value,target:+$('targetCoverage').value,manualLo:lo,manualHi:hi,trainWeeks:$('trainWeeks').value,wfMethod:$('wfMethod').value,wfTarget:+$('wfTarget').value,bootstrapMode:$('bootstrapMode').value,blockLen:+$('blockLen').value,holdoutPct:+$('holdoutPct').value,credit:Math.max(0,+$('creditPct').value||0),iv:Math.max(.0001,+$('ivPct').value/100),r:+$('rfPct').value/100};
+}
+function regimePass(f,regime){if(regime==='all')return true;if(!f)return false;switch(regime){case'rvLow':return Number.isFinite(f.rvPct)&&f.rvPct<1/3;case'rvMid':return Number.isFinite(f.rvPct)&&f.rvPct>=1/3&&f.rvPct<2/3;case'rvHigh':return Number.isFinite(f.rvPct)&&f.rvPct>=2/3;case'above200':return Number.isFinite(f.ma200)&&f.price>f.ma200;case'below200':return Number.isFinite(f.ma200)&&f.price<f.ma200;case'momPos':return Number.isFinite(f.mom30)&&f.mom30>=0;case'momNeg':return Number.isFinite(f.mom30)&&f.mom30<0;case'dd10':return Number.isFinite(f.drawdown)&&f.drawdown>-10;case'dd20':return Number.isFinite(f.drawdown)&&f.drawdown<=-20;default:return true;}}
+function lastBarBefore(arr,markTs){const i=bisectAtOrAfter(arr,markTs)-1;return i>=0?arr[i]:null;}
+function featureBefore(markTs){const i=bisectAtOrAfter(state.daily,markTs)-1;if(i<0)return null;return{...state.features[i],price:state.daily[i].close,index:i};}
+function makeIntradayBase(s,useLookback=true,weekdayOverride=null,entryHourOverride=null,expiryHourOverride=null){
+  const x=state.intraday,d=state.daily;if(!x.length||!d.length)return[];const wd=weekdayOverride??s.weekday,eh=entryHourOverride??s.entryHour,xh=expiryHourOverride??s.expiryHour;if(!(xh>eh))return[];const last=x.at(-1).ts;let cutoff=-Infinity;if(useLookback&&s.lookback!=='all')cutoff=last-(+s.lookback)*365.25*DAY;const arr=[],barHours=Number.isFinite(state.intradayHours)?state.intradayHours:1;
+  for(const anchorBar of d){const anchor=anchorBar.ts,dt=new Date(anchor);if(dt.getUTCDay()!==wd)continue;const entryMark=anchor+eh*HOUR,expiryMark=anchor+xh*HOUR;if(entryMark<cutoff||expiryMark>last+barHours*HOUR)continue;const ebar=lastBarBefore(x,entryMark),xbar=lastBarBefore(x,expiryMark);if(!ebar||!xbar||xbar.ts<=ebar.ts)continue;if(entryMark-ebar.ts>(barHours+0.25)*HOUR||expiryMark-xbar.ts>(barHours+0.25)*HOUR)continue;const f=featureBefore(entryMark);if(!f||!regimePass(f,s.regime))continue;const p=scanPath(x,entryMark,expiryMark-1,ebar.close);if(!p.n)continue;const ret=(xbar.close/ebar.close-1)*100;arr.push({session:true,entryTs:entryMark,expiryTs:expiryMark,entrySourceTs:ebar.ts,expirySourceTs:xbar.ts,entry:ebar.close,expiry:xbar.close,ret,pathMin:Math.min(ebar.close,p.min),pathMax:Math.max(ebar.close,p.max),pathMinRet:(Math.min(ebar.close,p.min)/ebar.close-1)*100,pathMaxRet:(Math.max(ebar.close,p.max)/ebar.close-1)*100,pathSource:'intraday-close',rv30:f.rv30,rvPct:f.rvPct,ma200:f.ma200,mom30:f.mom30,drawdown:f.drawdown,sessionHours:xh-eh,entryHour:eh,expiryHour:xh});}
+  return arr;
+}
+function makeWeekendBase(s,useLookback=true,weekdayOverride=null,entryHourOverride=null){
+  const x=state.intraday,d=state.daily;if(!x.length||!d.length)return[];const wd=weekdayOverride??5,eh=entryHourOverride??16;const last=x.at(-1).ts;let cutoff=-Infinity;if(useLookback&&s.lookback!=='all')cutoff=last-(+s.lookback)*365.25*DAY;const arr=[],barHours=Number.isFinite(state.intradayHours)?state.intradayHours:1;
+  for(const anchorBar of d){const anchor=anchorBar.ts;if(new Date(anchor).getUTCDay()!==wd)continue;const entryMark=anchor+eh*HOUR,expiryMark=anchor+2*DAY+8*HOUR;if(entryMark<cutoff||expiryMark>last+barHours*HOUR)continue;const ebar=lastBarBefore(x,entryMark),xbar=lastBarBefore(x,expiryMark);if(!ebar||!xbar||xbar.ts<=ebar.ts)continue;if(entryMark-ebar.ts>(barHours+0.25)*HOUR||expiryMark-xbar.ts>(barHours+0.25)*HOUR)continue;const f=featureBefore(entryMark);if(!f||!regimePass(f,s.regime))continue;const p=scanPath(x,entryMark,expiryMark-1,ebar.close);if(!p.n)continue;const ret=(xbar.close/ebar.close-1)*100;arr.push({session:true,weekend:true,entryTs:entryMark,expiryTs:expiryMark,entrySourceTs:ebar.ts,expirySourceTs:xbar.ts,entry:ebar.close,expiry:xbar.close,ret,pathMin:Math.min(ebar.close,p.min),pathMax:Math.max(ebar.close,p.max),pathMinRet:(Math.min(ebar.close,p.min)/ebar.close-1)*100,pathMaxRet:(Math.max(ebar.close,p.max)/ebar.close-1)*100,pathSource:'intraday-close',rv30:f.rv30,rvPct:f.rvPct,ma200:f.ma200,mom30:f.mom30,drawdown:f.drawdown,sessionHours:(expiryMark-entryMark)/HOUR,entryHour:eh,expiryHour:8});}
+  return arr;
+}
+function makeMultiDayBase(s,useLookback=true,weekdayOverride=null,expiryOverride=null){
+  const d=state.daily;if(!d.length)return[];const last=d.at(-1).ts;let cutoff=-Infinity;if(useLookback&&s.lookback!=='all')cutoff=last-(+s.lookback)*365.25*DAY;const wd=weekdayOverride??s.weekday,exp=expiryOverride??s.expiry,arr=[];
+  for(let i=0;i<d.length;i++){const e=d[i],dt=new Date(e.ts);if(e.ts<cutoff||dt.getUTCDay()!==wd)continue;const f={...state.features[i],price:e.close};if(!regimePass(f,s.regime))continue;const target=e.ts+exp*DAY,j=bisectAtOrAfter(d,target);if(j>=d.length)continue;const xb=d[j];if(Math.abs(xb.ts-target)>36*HOUR)continue;const ret=(xb.close/e.close-1)*100,p=pathExtrema(e.ts,xb.ts,e.close);arr.push({session:false,entryTs:e.ts,expiryTs:xb.ts,entry:e.close,expiry:xb.close,ret,pathMin:p.min,pathMax:p.max,pathMinRet:(p.min/e.close-1)*100,pathMaxRet:(p.max/e.close-1)*100,pathSource:p.source,rv30:f.rv30,rvPct:f.rvPct,ma200:f.ma200,mom30:f.mom30,drawdown:f.drawdown,sessionHours:exp*24});}return arr;
+}
+function makeBase(s,useLookback=true,weekdayOverride=null,expiryOverride=null){if(s.mode==='multi')return makeMultiDayBase(s,useLookback,weekdayOverride,expiryOverride);if(s.mode==='weekend')return makeWeekendBase(s,useLookback,weekdayOverride,s.entryHour);return makeIntradayBase(s,useLookback,weekdayOverride,s.entryHour,s.expiryHour);}
+function equalTailRange(rets,target){const a=(1-target)/2;return{lo:Math.min(-.01,quantile(rets,a)),hi:Math.max(.01,quantile(rets,1-a))};}
+function minWidthRange(rets,target){const s=[...rets].filter(Number.isFinite).sort((a,b)=>a-b),k=Math.max(2,Math.ceil(target*s.length));if(k>s.length)return equalTailRange(s,target);let best=null;for(let i=0;i+k-1<s.length;i++){const lo=s[i],hi=s[i+k-1];if(lo>0||hi<0)continue;const w=hi-lo;if(!best||w<best.w)best={lo,hi,w};}return best?{lo:Math.min(-.01,best.lo),hi:Math.max(.01,best.hi)}:equalTailRange(s,target);}
+function chooseRange(s,base){if(s.strategy==='straddle')return{lo:s.manualLo,hi:s.manualHi,source:'Assumed straddle breakeven band'};if(s.rangeMethod==='manual')return{lo:s.manualLo,hi:s.manualHi,source:'Manual strike distances'};const rets=base.map(x=>x.ret),r=s.rangeMethod==='minWidth'?minWidthRange(rets,s.target):equalTailRange(rets,s.target);return{...r,source:`${s.rangeMethod==='minWidth'?'Minimum-width':'Equal-tail'} empirical ${(s.target*100).toFixed(0)}% range`};}
+function applyRange(base,lo,hi,withTouch=true){return base.map(x=>{const low=x.entry*(1+lo/100),high=x.entry*(1+hi/100),inside=x.ret>=lo&&x.ret<=hi,noTouch=x.pathMinRet>=lo&&x.pathMaxRet<=hi,lower=x.ret<lo,upper=x.ret>hi,touch=withTouch&&!noTouch?firstTouch(x,lo,hi):null;return{...x,lo,hi,low,high,inside,noTouch,lower,upper,recovered:inside&&!noTouch,lowerExcess:lower?lo-x.ret:0,upperExcess:upper?x.ret-hi:0,touch};});}
+function summarize(a){const r=a.map(x=>x.ret),n=a.length;if(!n)return{n:0};return{n,mean:mean(r),median:median(r),sd:sd(r),q01:quantile(r,.01),q05:quantile(r,.05),q25:quantile(r,.25),q75:quantile(r,.75),q95:quantile(r,.95),q99:quantile(r,.99),min:Math.min(...r),max:Math.max(...r),skew:skewness(r),kurt:excessKurtosis(r),rho:autocorr(r),rhoAbs:autocorr(r.map(Math.abs)),rhoSq:autocorr(r.map(x=>x*x))};}
+function effectiveN(a){if(a.length<4)return a.length;const x=a.map(v=>v?1:0),rho=autocorr(x);if(!Number.isFinite(rho))return a.length;return clamp(a.length*(1-rho)/(1+rho),1,a.length);}
+function wilson(k,n,z=1.959963984540054){if(!n)return[NaN,NaN];const p=k/n,den=1+z*z/n,ctr=(p+z*z/(2*n))/den,half=z*Math.sqrt((p*(1-p)+z*z/(4*n))/n)/den;return[ctr-half,ctr+half];}
+function lcg(seed=123456789){let s=seed>>>0;return()=>((s=(1664525*s+1013904223)>>>0)/4294967296);}
+function bootstrapCI(series,mode='block',blockLen=4,reps=1400){const x=series.map(v=>v?1:0),n=x.length;if(n<8)return[NaN,NaN];const rng=lcg(20260909),vals=[];for(let b=0;b<reps;b++){let sum=0,count=0;if(mode==='iid'){for(let i=0;i<n;i++){const j=Math.floor(rng()*n);sum+=x[j];count++;}}else{while(count<n){const start=Math.floor(rng()*n);for(let k=0;k<blockLen&&count<n;k++){sum+=x[(start+k)%n];count++;}}}vals.push(sum/n);}return[quantile(vals,.025),quantile(vals,.975)];}
+function rangeFromTraining(train,target,method){const r=train.map(x=>x.ret);return method==='minWidth'?minWidthRange(r,target):equalTailRange(r,target);}
+function walkForward(s,target=s.wfTarget,method=s.wfMethod){
+  const all=state.baseAll,evalCut=state.baseEval.length?state.baseEval[0].entryTs:-Infinity,out=[];for(const cur of all){if(cur.entryTs<evalCut)continue;const minTs=s.trainWeeks==='all'?-Infinity:cur.entryTs-(+s.trainWeeks)*7*DAY;const train=all.filter(x=>x.expiryTs<cur.entryTs&&x.entryTs>=minTs);if(train.length<20)continue;const rg=rangeFromTraining(train,target,method),inside=cur.ret>=rg.lo&&cur.ret<=rg.hi,noTouch=cur.pathMinRet>=rg.lo&&cur.pathMaxRet<=rg.hi;out.push({...cur,wfLo:rg.lo,wfHi:rg.hi,inside,noTouch,trainN:train.length});}return out;
+}
+function calibrationSeries(s){return[.5,.6,.7,.8,.9,.95].map(t=>{const a=walkForward(s,t,s.wfMethod);return{target:t,observed:a.length?a.filter(x=>x.inside).length/a.length:NaN,n:a.length};});}
+function run(){
+  if(!state.daily.length)return;const s=settings();state.baseAll=makeBase(s,false);state.baseEval=makeBase(s,true);state.range=chooseRange(s,state.baseEval);state.records=applyRange(state.baseEval,state.range.lo,state.range.hi,true);state.wf=walkForward(s);state.cal=calibrationSeries(s);renderAll(s);
+}
+function renderAll(s){renderKPIs(s);renderZeroDteDesk(s);renderLivePanel(s);renderDistribution(s);renderStats(s);renderRisk(s);renderWalkForward(s);renderCalibration();renderRolling();renderVol();renderHeatmap(s);renderDOW(s);renderHorizonSurface(s);renderSessionSensitivity(s);renderWeekendBenchmark(s);renderRequiredRangeLadder(s);renderRobustnessHoldout(s);renderCases();renderModel(s);renderPayoff(s);renderOverlap(s);}
+function renderKPIs(s){const a=state.records,n=a.length,wins=a.filter(x=>x.inside).length,nt=a.filter(x=>x.noTouch).length,rec=a.filter(x=>x.recovered).length,lo=a.filter(x=>x.lower).length,hi=a.filter(x=>x.upper).length,st=summarize(a),neff=effectiveN(a.map(x=>x.inside));$('kWin').textContent=n?fmtRate(wins/n):'—';$('kNoTouch').textContent=n?fmtRate(nt/n):'—';$('kRecovered').textContent=n?fmtRate(rec/n):'—';$('kBreach').textContent=n?`${fmtRate(lo/n)} / ${fmtRate(hi/n)}`:'—';$('kN').textContent=n?`${Math.round(neff)} / ${n}`:'—';$('kSigma').textContent=Number.isFinite(st.sd)?st.sd.toFixed(2)+'%':'—';$('kTouchFoot').textContent=s.mode==='multi'?(state.intraday.length?state.pathLabel+'; daily fallback':'daily observations'):'hourly-close path proxy';$('kPeriod').textContent=n?`${date(a[0].entryTs)} → ${date(a.at(-1).entryTs)}`:'no observations';$('kWinFoot').textContent=s.strategy==='strangle'?'expiry inside strike range':'expiry inside assumed BE band';$('lowerViz').textContent=fmtPct(state.range.lo,1);$('upperViz').textContent=fmtPct(state.range.hi,1);$('rangeSource').textContent=state.range.source;$('lowerPct').disabled=s.strategy==='strangle'&&s.rangeMethod!=='manual';$('upperPct').disabled=s.strategy==='strangle'&&s.rangeMethod!=='manual';}
+function recentRV(days){return rollingRVAt(state.daily.length-1,days);}
+function jbTest(st){if(!st.n||!Number.isFinite(st.skew)||!Number.isFinite(st.kurt))return{jb:NaN,p:NaN};const jb=st.n/6*(st.skew**2+st.kurt**2/4);return{jb,p:Math.exp(-jb/2)};}
+function renderStats(s){
+  const a=state.records,st=summarize(a),wins=a.filter(x=>x.inside).length,[wL,wH]=wilson(wins,a.length),[bL,bH]=bootstrapCI(a.map(x=>x.inside),s.bootstrapMode,s.blockLen);let normalInside=NaN;if(Number.isFinite(st.sd)&&st.sd>0)normalInside=N((state.range.hi-st.mean)/st.sd)-N((state.range.lo-st.mean)/st.sd);const empirical=a.length?wins/a.length:NaN,jb=jbTest(st),outside2=Number.isFinite(st.sd)&&st.sd>0?a.filter(x=>Math.abs(x.ret-st.mean)>2*st.sd).length/a.length:NaN,tailMult=Number.isFinite(outside2)?outside2/.0455:NaN;
+  const items=[['MEAN',fmtPct(st.mean)],['MEDIAN',fmtPct(st.median)],['STD. DEV.',Number.isFinite(st.sd)?st.sd.toFixed(2)+'%':'—'],['SKEWNESS',fnum(st.skew)],['EXCESS KURTOSIS',fnum(st.kurt)],['JARQUE-BERA',Number.isFinite(jb.jb)?jb.jb.toFixed(1):'—'],['JB P-VALUE',Number.isFinite(jb.p)?jb.p.toExponential(2):'—'],['NORMAL INSIDE',fmtRate(normalInside)],['EMP − NORMAL',Number.isFinite(empirical-normalInside)?((empirical-normalInside)*100).toFixed(1)+' pp':'—'],['WILSON 95% CI',Number.isFinite(wL)?`${fmtRate(wL)} — ${fmtRate(wH)}`:'—'],['BOOTSTRAP 95% CI',Number.isFinite(bL)?`${fmtRate(bL)} — ${fmtRate(bH)}`:'—'],['±2σ TAIL MULT.',Number.isFinite(tailMult)?tailMult.toFixed(2)+'×':'—'],['RET ACF(1)',fnum(st.rho)],['|RET| ACF(1)',fnum(st.rhoAbs)],['RET² ACF(1)',fnum(st.rhoSq)],['5TH / 95TH',`${fmtPct(st.q05)} / ${fmtPct(st.q95)}`],['1ST / 99TH',`${fmtPct(st.q01)} / ${fmtPct(st.q99)}`],['MIN / MAX',`${fmtPct(st.min)} / ${fmtPct(st.max)}`]];
+  $('statsGrid').innerHTML=items.map(([l,v])=>`<div class="stat"><div class="slabel">${l}</div><div class="sval">${v}</div></div>`).join('');
+}
+function setupCanvas(c){const dpr=Math.max(1,window.devicePixelRatio||1),r=c.getBoundingClientRect();c.width=Math.max(1,Math.round(r.width*dpr));c.height=Math.max(1,Math.round(r.height*dpr));const ctx=c.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);return{ctx,w:r.width,h:r.height};}
+function css(name){return getComputedStyle(document.documentElement).getPropertyValue(name).trim();}
+function axes(ctx,w,h,pad,xTicks=[],yTicks=[]){ctx.strokeStyle=css('--line');ctx.fillStyle=css('--muted');ctx.font='9px '+css('--mono');ctx.lineWidth=1;for(const t of yTicks){ctx.beginPath();ctx.moveTo(pad.l,t.y);ctx.lineTo(w-pad.r,t.y);ctx.stroke();ctx.textAlign='right';ctx.fillText(t.label,pad.l-6,t.y+3);}for(const t of xTicks){ctx.textAlign='center';ctx.fillText(t.label,t.x,h-10);}}
+function modelHorizonYears(s){const ctx=sessionContext(s);if(ctx.phase==='ACTIVE'&&ctx.expiryTs>Date.now())return Math.max(1/3600,(ctx.expiryTs-Date.now())/1000)/(365*24*3600);return s.mode==='multi'?Math.max(1/24,s.expiry)/365:Math.max(1,s.sessionHours)/(365*24);} 
+function currentSpot(){const fresh=Number.isFinite(state.live.price)&&Date.now()-state.live.ts<60000;return fresh?state.live.price:(state.latestIntraday?.close||state.latest?.close||0);} 
+function lastHistoricalCloseBefore(ts){const a=state.intraday.length?state.intraday:state.daily;if(!a.length)return NaN;const i=bisectAtOrAfter(a,ts);return a[Math.max(0,i-1)]?.close;} 
+function utcDateParts(ts){const d=new Date(ts);return{y:d.getUTCFullYear(),m:d.getUTCMonth(),d:d.getUTCDate(),wd:d.getUTCDay()};} 
+function addUtcDays(ts,n){return ts+n*DAY;} 
+function nextWeekdayStart(now,wd){const d=new Date(now),today=Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()),delta=(wd-d.getUTCDay()+7)%7;return today+delta*DAY;} 
+function sessionContext(s){const now=Date.now();if(s.mode==='multi')return{phase:'RESEARCH',entryTs:NaN,expiryTs:NaN,label:`${s.expiry}D research`};if(s.mode==='friday0dte'){const p=utcDateParts(now);let day=nextWeekdayStart(now,5);if(p.wd===5)day=Date.UTC(p.y,p.m,p.d);const entryTs=day+s.entryHour*HOUR,expiryTs=day+s.expiryHour*HOUR;const phase=now<entryTs?'UPCOMING':now<expiryTs?'ACTIVE':(p.wd===5?'EXPIRED':'UPCOMING');return{phase,entryTs,expiryTs,label:'Friday 0DTE'};}if(s.mode==='weekend'){const p=utcDateParts(now),today=Date.UTC(p.y,p.m,p.d);let fri;if(p.wd===5)fri=today;else if(p.wd===6)fri=today-DAY;else if(p.wd===0&&now<today+8*HOUR)fri=today-2*DAY;else fri=nextWeekdayStart(now,5);const entryTs=fri+16*HOUR,expiryTs=fri+2*DAY+8*HOUR,phase=now<entryTs?'UPCOMING':now<expiryTs?'ACTIVE':'EXPIRED';return{phase,entryTs,expiryTs,label:'Weekend benchmark'};}const p=utcDateParts(now),day=nextWeekdayStart(now,s.weekday),entryTs=day+s.entryHour*HOUR,expiryTs=day+s.expiryHour*HOUR,phase=now<entryTs?'UPCOMING':now<expiryTs?'ACTIVE':'EXPIRED';return{phase,entryTs,expiryTs,label:'Custom intraday'};} 
+function strategyAnchorSpot(s){const ctx=sessionContext(s);if((ctx.phase==='ACTIVE'||ctx.phase==='EXPIRED')&&Number.isFinite(state.live.entryPrice)&&state.live.entryTs===ctx.entryTs)return state.live.entryPrice;if((ctx.phase==='ACTIVE'||ctx.phase==='EXPIRED')&&Number.isFinite(ctx.entryTs)){const h=lastHistoricalCloseBefore(ctx.entryTs);if(Number.isFinite(h))return h;}return currentSpot();} 
+
+function renderZeroDteDesk(s){const panel=$('zeroDtePanel'),a=state.records,rets=a.map(x=>x.ret),st=summarize(a),eq80=equalTailRange(rets,.8),mw80=minWidthRange(rets,.8),hours=s.mode==='multi'?s.expiry*24:s.sessionHours,ivMove=Number.isFinite(s.iv)?s.iv*Math.sqrt(hours/(365*24))*100:NaN,spot=strategyAnchorSpot(s),lowPx=spot*(1+state.range.lo/100),hiPx=spot*(1+state.range.hi/100),fragile=a.length?mean(a.map(x=>Math.min(Math.abs(x.ret-state.range.lo),Math.abs(x.ret-state.range.hi))<=.25?1:0)):NaN,items=[['SESSION',s.mode==='multi'?`${s.expiry}D`:`${weekdayNames[s.weekday]} ${String(s.entryHour).padStart(2,'0')}:00→${String(s.expiryHour).padStart(2,'0')}:00`,'UTC marks'],['HOLD',hours?hours.toFixed(0)+'h':'—','time to expiry'],['OBSERVATIONS',a.length||'—',s.mode==='multi'?'legacy horizon':'same-session samples'],['SESSION σ',Number.isFinite(st.sd)?st.sd.toFixed(2)+'%':'—','historical expiry-return SD'],['5TH / 95TH',`${fmtPct(st.q05)} / ${fmtPct(st.q95)}`,'historical tails'],['80% EQUAL-TAIL',`${fmtPct(eq80.lo,2)} / ${fmtPct(eq80.hi,2)}`,'empirical reference'],['80% MIN-WIDTH',`${fmtPct(mw80.lo,2)} / ${fmtPct(mw80.hi,2)}`,'empirical reference'],['MODEL IV MOVE',Number.isFinite(ivMove)?`±${ivMove.toFixed(2)}%`:'—',`${(s.iv*100).toFixed(0)}% IV · sqrt(time)`],['SELECTED PUT',fmtUSD(lowPx),fmtPct(state.range.lo,2)+' vs entry/preview anchor'],['SELECTED CALL',fmtUSD(hiPx),fmtPct(state.range.hi,2)+' vs entry/preview anchor'],['ENTRY PROXY',s.mode==='multi'?'daily close':'last completed 1H close','no future bucket used'],['EXPIRY PROXY',s.mode==='multi'?'daily close':'last completed 1H close','08:00 proxy ≈ 07:59 close'],['PROXY-SENSITIVE',s.mode==='multi'?'—':fmtRate(fragile),'expiry within 0.25 pp of a boundary']];$('zeroDteGrid').innerHTML=items.map(([l,v,f])=>`<div class="metric"><div class="m-label">${l}</div><div class="m-value">${v}</div><div class="m-foot">${f}</div></div>`).join('');$('zeroDteDeskLabel').textContent=s.mode==='multi'?`${s.expiry}D LEGACY CONTEXT`:`${String(s.entryHour).padStart(2,'0')}:00 → ${String(s.expiryHour).padStart(2,'0')}:00 UTC · ${state.pathLabel.toUpperCase()} PROXY`;$('settlementProxyNote').style.display=s.mode==='multi'?'none':'block';}
+function renderSessionSensitivity(s){
+  const body=$('sensitivityBody');if(s.mode==='multi'||!state.intraday.length){body.innerHTML='<tr><td colspan="7">Switch to Friday 0DTE / intraday / weekend mode to study entry-time sensitivity.</td></tr>';return;}
+  const rows=[];
+  if(s.mode==='weekend'){
+    for(const eh of [12,14,16,18,20]){const b=makeWeekendBase(s,true,5,eh),a=applyRange(b,state.range.lo,state.range.hi,false),st=summarize(a),n=a.length;rows.push(`<tr${eh===16?' style="outline:1px solid var(--accent)"':''}><td>${String(eh).padStart(2,'0')}:00${eh===16?' *':''}</td><td>${48+8-eh}h</td><td>${n}</td><td>${fmtRate(n?mean(a.map(x=>x.inside?1:0)):NaN)}</td><td>${fmtRate(n?mean(a.map(x=>x.noTouch?1:0)):NaN)}</td><td>${Number.isFinite(st.sd)?st.sd.toFixed(2)+'%':'—'}</td><td>${fmtPct(st.q05)} / ${fmtPct(st.q95)}</td></tr>`);}
+  }else{
+    for(let eh=0;eh<s.expiryHour;eh++){const b=makeIntradayBase(s,true,5,eh,s.expiryHour),a=applyRange(b,state.range.lo,state.range.hi,false),st=summarize(a),n=a.length;rows.push(`<tr${eh===s.entryHour?' style="outline:1px solid var(--accent)"':''}><td>${String(eh).padStart(2,'0')}:00${eh===s.entryHour?' *':''}</td><td>${s.expiryHour-eh}h</td><td>${n}</td><td>${fmtRate(n?mean(a.map(x=>x.inside?1:0)):NaN)}</td><td>${fmtRate(n?mean(a.map(x=>x.noTouch?1:0)):NaN)}</td><td>${Number.isFinite(st.sd)?st.sd.toFixed(2)+'%':'—'}</td><td>${fmtPct(st.q05)} / ${fmtPct(st.q95)}</td></tr>`);}
+  }
+  body.innerHTML=rows.join('');
+}
+function annualizedSessionRV(base,hours){const r=base.map(x=>Math.log(x.expiry/x.entry)).filter(Number.isFinite);return r.length>1&&hours>0?sd(r)*Math.sqrt(365*24/hours)*100:NaN;}
+function absQuantile(base,q){return quantile(base.map(x=>Math.abs(x.ret)),q);}
+function insideRate(base,lo,hi){return base.length?mean(base.map(x=>x.ret>=lo&&x.ret<=hi?1:0)):NaN;}
+function noTouchRate(base,lo,hi){return base.length?mean(base.map(x=>x.pathMinRet>=lo&&x.pathMaxRet<=hi?1:0)):NaN;}
+function renderWeekendBenchmark(s){
+  const z=makeIntradayBase({...s,mode:'friday0dte'},true,5,0,8),w=makeWeekendBase({...s,mode:'weekend'},true,5,16),zs=summarize(z),ws=summarize(w),zrv=annualizedSessionRV(z,8),wrv=annualizedSessionRV(w,40),z80=absQuantile(z,.8),w80=absQuantile(w,.8);
+  const items=[
+    ['SESSION','Fri 00→08 / Fri16→Sun08','0DTE / weekend control'],
+    ['HOLD','8h / 40h','0DTE / weekend'],
+    ['OBSERVATIONS',`${z.length||'—'} / ${w.length||'—'}`,'same lookback + regime'],
+    ['MEDIAN |MOVE|',`${fmtPct(median(z.map(x=>Math.abs(x.ret))),2)} / ${fmtPct(median(w.map(x=>Math.abs(x.ret))),2)}`,'0DTE / weekend'],
+    ['90% |MOVE|',`${fmtPct(absQuantile(z,.9),2)} / ${fmtPct(absQuantile(w,.9),2)}`,'empirical'],
+    ['95% |MOVE|',`${fmtPct(absQuantile(z,.95),2)} / ${fmtPct(absQuantile(w,.95),2)}`,'empirical'],
+    ['SESSION σ',`${fmtPct(zs.sd,2)} / ${fmtPct(ws.sd,2)}`,'expiry-return SD'],
+    ['ANN. REALIZED VOL',`${fmtPct(zrv,1)} / ${fmtPct(wrv,1)}`,'sqrt-time annualized'],
+    ['SELECTED CONTAINMENT',`${fmtRate(insideRate(z,state.range.lo,state.range.hi))} / ${fmtRate(insideRate(w,state.range.lo,state.range.hi))}`,'same percentage boundaries'],
+    ['NO-TOUCH PROXY',`${fmtRate(noTouchRate(z,state.range.lo,state.range.hi))} / ${fmtRate(noTouchRate(w,state.range.lo,state.range.hi))}`,'hourly-close path'],
+    ['80% SYM. WIDTH',`±${Number.isFinite(z80)?z80.toFixed(2):'—'}% / ±${Number.isFinite(w80)?w80.toFixed(2):'—'}%`,'|return| percentile'],
+    ['MODEL IV / RV',`${Number.isFinite(zrv)?(s.iv*100/zrv).toFixed(2)+'×':'—'} / ${Number.isFinite(wrv)?(s.iv*100/wrv).toFixed(2)+'×':'—'}`,'manual IV ÷ realized vol']
+  ];
+  $('benchmarkGrid').innerHTML=items.map(([l,v,f])=>`<div class="metric"><div class="m-label">${l}</div><div class="m-value">${v}</div><div class="m-foot">${f}</div></div>`).join('');
+}
+function renderRequiredRangeLadder(s){
+  const z=makeIntradayBase({...s,mode:'friday0dte'},true,5,0,8),w=makeWeekendBase({...s,mode:'weekend'},true,5,16),zr=z.map(x=>x.ret),wr=w.map(x=>x.ret),targets=[.5,.7,.8,.9,.95];
+  $('rangeLadderBody').innerHTML=targets.map(t=>{const eq=equalTailRange(zr,t),mw=minWidthRange(zr,t),sym=absQuantile(z,t),wsym=absQuantile(w,t);return `<tr><td>${(t*100).toFixed(0)}%</td><td>${fmtPct(eq.lo,2)} / ${fmtPct(eq.hi,2)}</td><td>${fmtPct(mw.lo,2)} / ${fmtPct(mw.hi,2)}</td><td>±${Number.isFinite(sym)?sym.toFixed(2):'—'}%</td><td>±${Number.isFinite(wsym)?wsym.toFixed(2):'—'}%</td></tr>`;}).join('');
+}
+function tailShare(sev,k){if(!sev.length)return NaN;const s=[...sev].sort((a,b)=>b-a),tot=s.reduce((a,b)=>a+b,0);return tot>0?s.slice(0,k).reduce((a,b)=>a+b,0)/tot:NaN;}
+function renderRobustnessHoldout(s){
+  const baseEntry=s.mode==='friday0dte'?s.entryHour:0;let entries=[Math.max(0,baseEntry-1),baseEntry,Math.min(7,baseEntry+1)];entries=[...new Set(entries)];while(entries.length<3){const x=Math.min(7,entries.at(-1)+1);if(entries.includes(x))break;entries.push(x);}const adjs=[-.25,0,.25];let html='<thead><tr><th>ENTRY \\ RANGE</th><th>NARROW 0.25pp</th><th>BASE</th><th>WIDE 0.25pp</th></tr></thead><tbody>',vals=[];
+  for(const eh of entries){const b=makeIntradayBase({...s,mode:'friday0dte'},true,5,eh,8);html+=`<tr><th>${String(eh).padStart(2,'0')}:00</th>`;for(const a of adjs){const lo=Math.min(-.01,state.range.lo-a),hi=Math.max(.01,state.range.hi+a),r=insideRate(b,lo,hi);if(Number.isFinite(r))vals.push(r);const pct=Math.round((.05+.45*(Number.isFinite(r)?r:0))*100);html+=`<td style="cursor:default;background:color-mix(in srgb,var(--good) ${pct}%,var(--panel))">${fmtRate(r)}</td>`;}html+='</tr>';}
+  html+='</tbody>';$('robustTable').innerHTML=html;const span=vals.length?(Math.max(...vals)-Math.min(...vals))*100:NaN;$('robustNote').textContent=`Fragility span across nearby entry/range settings: ${Number.isFinite(span)?span.toFixed(1)+' percentage points':'—'}. Smaller is more robust; this is not a profitability metric.`;
+
+  const focusAll=makeIntradayBase({...s,mode:'friday0dte',lookback:'all'},false,5,0,8),hp=clamp(s.holdoutPct||.3,.1,.5),cut=Math.max(1,Math.floor(focusAll.length*(1-hp))),train=focusAll.slice(0,cut),test=focusAll.slice(cut);let rg={lo:NaN,hi:NaN},trainFit=NaN,testFit=NaN;if(train.length>=20&&test.length){rg=rangeFromTraining(train,s.wfTarget,s.wfMethod);trainFit=insideRate(train,rg.lo,rg.hi);testFit=insideRate(test,rg.lo,rg.hi);}const focusEval=makeIntradayBase({...s,mode:'friday0dte'},true,5,0,8),ranged=applyRange(focusEval,state.range.lo,state.range.hi,false),sev=ranged.map(x=>x.lowerExcess+x.upperExcess).filter(x=>x>0),other=[];for(let wd=0;wd<7;wd++)if(wd!==5)other.push(...makeIntradayBase({...s,mode:'intraday'},true,wd,0,8));const friContain=insideRate(focusEval,state.range.lo,state.range.hi),otherContain=insideRate(other,state.range.lo,state.range.hi),friAbs=median(focusEval.map(x=>Math.abs(x.ret))),otherAbs=median(other.map(x=>Math.abs(x.ret))),worst=focusEval.length?Math.max(...focusEval.map(x=>Math.abs(x.ret))):NaN;
+  const items=[
+    ['HOLDOUT SPLIT',`${train.length} / ${test.length}`,`earlier / latest ${(hp*100).toFixed(0)}%`],
+    ['TRAIN-DERIVED RANGE',`${fmtPct(rg.lo,2)} / ${fmtPct(rg.hi,2)}`,`${(s.wfTarget*100).toFixed(0)}% ${s.wfMethod==='minWidth'?'min-width':'equal-tail'}`],
+    ['TRAIN CONTAINMENT',fmtRate(trainFit),'in-sample fit'],
+    ['HOLDOUT CONTAINMENT',fmtRate(testFit),'later unseen period'],
+    ['HOLDOUT CAL. ERROR',Number.isFinite(testFit)?((testFit-s.wfTarget)*100).toFixed(1)+' pp':'—','observed − target'],
+    ['MEDIAN |MOVE|',`${fmtPct(median(train.map(x=>Math.abs(x.ret))),2)} / ${fmtPct(median(test.map(x=>Math.abs(x.ret))),2)}`,'train / holdout'],
+    ['BREACH EVENTS',sev.length||'0','selected 0DTE range'],
+    ['WORST |MOVE|',fmtPct(worst,2),'Friday 00→08'],
+    ['TOP 1 TAIL SHARE',fmtRate(tailShare(sev,1)),'share of total boundary excess'],
+    ['TOP 3 TAIL SHARE',fmtRate(tailShare(sev,3)),'negative-skew concentration proxy'],
+    ['TOP 5 TAIL SHARE',fmtRate(tailShare(sev,5)),'negative-skew concentration proxy'],
+    ['FRIDAY CONTAINMENT EDGE',Number.isFinite(friContain)&&Number.isFinite(otherContain)?((friContain-otherContain)*100).toFixed(1)+' pp':'—','Friday vs all other days, same 00→08'],
+    ['FRIDAY |MOVE| EDGE',Number.isFinite(friAbs)&&Number.isFinite(otherAbs)?(friAbs-otherAbs).toFixed(2)+' pp':'—','median |move| Friday − other days'],
+    ['ROBUSTNESS SPAN',Number.isFinite(span)?span.toFixed(1)+' pp':'—','nearby time/range settings']
+  ];
+  $('holdoutTailGrid').innerHTML=items.map(([l,v,f])=>`<div class="metric"><div class="m-label">${l}</div><div class="m-value">${v}</div><div class="m-foot">${f}</div></div>`).join('');
+}
+function renderDistribution(s){const mode=$('distView').value,vals=state.records.map(x=>x.ret);if(mode==='ecdf')renderECDF(vals);else if(mode==='qq')renderQQ(vals);else renderHistogram(vals);}
+function renderHistogram(vals){const c=$('distCanvas'),{ctx,w,h}=setupCanvas(c);ctx.clearRect(0,0,w,h);if(vals.length<2)return;const pad={l:46,r:16,t:18,b:34},lo=Math.min(quantile(vals,.01),state.range.lo)-2,hi=Math.max(quantile(vals,.99),state.range.hi)+2,bins=34,bw=(hi-lo)/bins,cnt=Array(bins).fill(0);for(const v of vals){const k=Math.floor((v-lo)/bw);if(k>=0&&k<bins)cnt[k]++;}const ymax=Math.max(...cnt)*1.18,X=x=>pad.l+(x-lo)/(hi-lo)*(w-pad.l-pad.r),Y=y=>h-pad.b-y/ymax*(h-pad.t-pad.b);axes(ctx,w,h,pad,[0,.25,.5,.75,1].map(q=>{const v=lo+(hi-lo)*q;return{x:X(v),label:(v>=0?'+':'')+v.toFixed(0)+'%'}}),[0,.25,.5,.75,1].map(q=>({y:Y(ymax*q),label:Math.round(ymax*q)})));
+  ctx.fillStyle=css('--cyan');for(let i=0;i<bins;i++){const x0=X(lo+i*bw),x1=X(lo+(i+1)*bw),y=Y(cnt[i]);ctx.globalAlpha=.62;ctx.fillRect(x0+1,y,Math.max(1,x1-x0-2),h-pad.b-y);}ctx.globalAlpha=1;const m=mean(vals),sig=sd(vals);if(sig>0){ctx.strokeStyle=css('--accent');ctx.lineWidth=1.5;ctx.beginPath();for(let i=0;i<=240;i++){const x=lo+(hi-lo)*i/240,p=pdf((x-m)/sig)/sig,expected=p*vals.length*bw,px=X(x),py=Y(expected);i?ctx.lineTo(px,py):ctx.moveTo(px,py);}ctx.stroke();}
+  for(const [v,col] of [[state.range.lo,css('--bad')],[0,css('--muted')],[state.range.hi,css('--bad')]]){if(v<lo||v>hi)continue;ctx.strokeStyle=col;ctx.setLineDash(v===0?[3,4]:[]);ctx.beginPath();ctx.moveTo(X(v),pad.t);ctx.lineTo(X(v),h-pad.b);ctx.stroke();ctx.setLineDash([]);}ctx.fillStyle=css('--muted');ctx.textAlign='left';ctx.fillText('N='+vals.length,pad.l,pad.t-5);
+}
+function renderECDF(vals){const c=$('distCanvas'),{ctx,w,h}=setupCanvas(c);ctx.clearRect(0,0,w,h);if(vals.length<2)return;const s=[...vals].sort((a,b)=>a-b),pad={l:48,r:18,t:18,b:34},lo=Math.min(s[0],state.range.lo),hi=Math.max(s.at(-1),state.range.hi),X=x=>pad.l+(x-lo)/(hi-lo)*(w-pad.l-pad.r),Y=y=>h-pad.b-y*(h-pad.t-pad.b);axes(ctx,w,h,pad,[0,.25,.5,.75,1].map(q=>{const v=lo+(hi-lo)*q;return{x:X(v),label:(v>=0?'+':'')+v.toFixed(0)+'%'}}),[0,.25,.5,.75,1].map(q=>({y:Y(q),label:(q*100).toFixed(0)+'%'})));ctx.strokeStyle=css('--cyan');ctx.lineWidth=1.7;ctx.beginPath();s.forEach((v,i)=>{const px=X(v),py=Y((i+1)/s.length);i?ctx.lineTo(px,py):ctx.moveTo(px,py);});ctx.stroke();for(const v of [state.range.lo,state.range.hi]){ctx.strokeStyle=css('--bad');ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(X(v),pad.t);ctx.lineTo(X(v),h-pad.b);ctx.stroke();ctx.setLineDash([]);}}
+function invNorm(p){const a=[-39.69683028665376,220.9460984245205,-275.9285104469687,138.357751867269,-30.66479806614716,2.506628277459239],b=[-54.47609879822406,161.5858368580409,-155.6989798598866,66.80131188771972,-13.28068155288572],c=[-.007784894002430293,-.3223964580411365,-2.400758277161838,-2.549732539343734,4.374664141464968,2.938163982698783],d=[.007784695709041462,.3224671290700398,2.445134137142996,3.754408661907416],pl=.02425,ph=1-pl;let q,r;if(p<pl){q=Math.sqrt(-2*Math.log(p));return(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);}if(p>ph){q=Math.sqrt(-2*Math.log(1-p));return-(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);}q=p-.5;r=q*q;return(((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q/(((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);}
+function renderQQ(vals){const c=$('distCanvas'),{ctx,w,h}=setupCanvas(c);ctx.clearRect(0,0,w,h);if(vals.length<5)return;const s=[...vals].sort((a,b)=>a-b),m=mean(vals),sig=sd(vals),pts=s.map((v,i)=>({x:m+sig*invNorm((i+.5)/s.length),y:v})),all=pts.flatMap(p=>[p.x,p.y]),lo=Math.min(...all),hi=Math.max(...all),pad={l:48,r:18,t:18,b:34},X=x=>pad.l+(x-lo)/(hi-lo)*(w-pad.l-pad.r),Y=y=>h-pad.b-(y-lo)/(hi-lo)*(h-pad.t-pad.b);axes(ctx,w,h,pad,[0,.25,.5,.75,1].map(q=>{const v=lo+(hi-lo)*q;return{x:X(v),label:fmtPct(v,0)}}),[0,.25,.5,.75,1].map(q=>{const v=lo+(hi-lo)*q;return{y:Y(v),label:fmtPct(v,0)}}));ctx.strokeStyle=css('--accent');ctx.beginPath();ctx.moveTo(X(lo),Y(lo));ctx.lineTo(X(hi),Y(hi));ctx.stroke();ctx.fillStyle=css('--cyan');for(const p of pts){ctx.beginPath();ctx.arc(X(p.x),Y(p.y),2,0,Math.PI*2);ctx.fill();}ctx.fillStyle=css('--muted');ctx.textAlign='left';ctx.fillText('THEORETICAL NORMAL →',pad.l,h-10);}
+function renderRisk(){const a=state.records,n=a.length,lower=a.filter(x=>x.lower),upper=a.filter(x=>x.upper),touch=a.filter(x=>!x.noTouch),recovered=a.filter(x=>x.recovered),putFirst=a.filter(x=>x.touch?.side==='PUT'),callFirst=a.filter(x=>x.touch?.side==='CALL'),firstHours=a.filter(x=>x.touch).map(x=>x.touch.hours),st=summarize(a),downES=mean(a.filter(x=>x.ret<=st.q05).map(x=>x.ret)),upES=mean(a.filter(x=>x.ret>=st.q95).map(x=>x.ret)),items=[['MEAN LOWER EXCESS',lower.length?mean(lower.map(x=>x.lowerExcess)).toFixed(2)+' pp':'—','beyond put boundary'],['WORST LOWER EXCESS',lower.length?Math.max(...lower.map(x=>x.lowerExcess)).toFixed(2)+' pp':'—','tail breach'],['MEAN UPPER EXCESS',upper.length?mean(upper.map(x=>x.upperExcess)).toFixed(2)+' pp':'—','beyond call boundary'],['WORST UPPER EXCESS',upper.length?Math.max(...upper.map(x=>x.upperExcess)).toFixed(2)+' pp':'—','tail breach'],['5% DOWNSIDE TAIL ES',fmtPct(downES),'mean of worst 5% expiry returns'],['5% UPSIDE TAIL ES',fmtPct(upES),'mean of best 5% expiry returns'],['TOUCHED THEN RECOVERED',n?fmtRate(recovered.length/n):'—','path risk hidden by expiry'],['MEDIAN FIRST TOUCH',firstHours.length?(state.records[0]?.session?median(firstHours).toFixed(1)+' h':(median(firstHours)/24).toFixed(1)+' d'):'—',`${touch.length} touched cases`],['PUT TOUCHED FIRST',n?fmtRate(putFirst.length/n):'—','selected range'],['CALL TOUCHED FIRST',n?fmtRate(callFirst.length/n):'—','selected range'],['MEDIAN PATH LOW',n?fmtPct(median(a.map(x=>x.pathMinRet))):'—','max downside excursion'],['MEDIAN PATH HIGH',n?fmtPct(median(a.map(x=>x.pathMaxRet))):'—','max upside excursion']];$('riskGrid').innerHTML=items.map(([l,v,f])=>`<div class="metric"><div class="m-label">${l}</div><div class="m-value">${v}</div><div class="m-foot">${f}</div></div>`).join('');}
+function renderWalkForward(s){const a=state.wf,n=a.length,winCount=n?a.filter(x=>x.inside).length:0,nt=n?a.filter(x=>x.noTouch).length:0,obs=n?winCount/n:NaN,err=Number.isFinite(obs)?obs-s.wfTarget:NaN,avgLo=n?mean(a.map(x=>x.wfLo)):NaN,avgHi=n?mean(a.map(x=>x.wfHi)):NaN;$('wfSummary').innerHTML=[['TRADES',n],['TARGET',fmtRate(s.wfTarget)],['OBSERVED',fmtRate(obs)],['CAL ERROR',Number.isFinite(err)?(err*100).toFixed(1)+' pp':'—'],['NO-TOUCH',fmtRate(n?nt/n:NaN)],['AVG RANGE',`${fmtPct(avgLo,1)} / ${fmtPct(avgHi,1)}`]].map(([l,v])=>`<div><div class="l">${l}</div><div class="v">${v}</div></div>`).join('');
+  const c=$('wfCanvas'),{ctx,w,h}=setupCanvas(c);ctx.clearRect(0,0,w,h);if(n<2)return;const pad={l:44,r:16,t:18,b:30},lo=Math.min(...a.map(x=>x.ret),...a.map(x=>x.wfLo)),hi=Math.max(...a.map(x=>x.ret),...a.map(x=>x.wfHi)),X=i=>pad.l+i/(n-1)*(w-pad.l-pad.r),Y=v=>h-pad.b-(v-lo)/(hi-lo)*(h-pad.t-pad.b);axes(ctx,w,h,pad,[{x:pad.l,label:date(a[0].entryTs).slice(0,7)},{x:w-pad.r,label:date(a.at(-1).entryTs).slice(0,7)}],[{y:Y(0),label:'0%'}]);ctx.strokeStyle=css('--bad');ctx.globalAlpha=.75;ctx.beginPath();a.forEach((x,i)=>i?ctx.lineTo(X(i),Y(x.wfLo)):ctx.moveTo(X(i),Y(x.wfLo)));ctx.stroke();ctx.beginPath();a.forEach((x,i)=>i?ctx.lineTo(X(i),Y(x.wfHi)):ctx.moveTo(X(i),Y(x.wfHi)));ctx.stroke();ctx.globalAlpha=1;ctx.fillStyle=css('--cyan');a.forEach((x,i)=>{ctx.globalAlpha=x.inside?.7:1;ctx.beginPath();ctx.arc(X(i),Y(x.ret),x.inside?1.6:2.8,0,Math.PI*2);ctx.fill();});ctx.globalAlpha=1;}
+function renderCalibration(){const a=state.cal,c=$('calCanvas'),{ctx,w,h}=setupCanvas(c);ctx.clearRect(0,0,w,h);const valid=a.filter(x=>Number.isFinite(x.observed));if(!valid.length){$('calNote').textContent='Insufficient walk-forward history.';return;}const pad={l:48,r:18,t:18,b:34},X=v=>pad.l+(v-.45)/.55*(w-pad.l-pad.r),Y=v=>h-pad.b-(v-.45)/.55*(h-pad.t-pad.b);axes(ctx,w,h,pad,[.5,.6,.7,.8,.9,1].map(v=>({x:X(v),label:(v*100).toFixed(0)+'%'})),[.5,.6,.7,.8,.9,1].map(v=>({y:Y(v),label:(v*100).toFixed(0)+'%'})));ctx.strokeStyle=css('--muted');ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(X(.5),Y(.5));ctx.lineTo(X(1),Y(1));ctx.stroke();ctx.setLineDash([]);ctx.strokeStyle=css('--purple');ctx.fillStyle=css('--purple');ctx.lineWidth=1.7;ctx.beginPath();valid.forEach((p,i)=>{i?ctx.lineTo(X(p.target),Y(p.observed)):ctx.moveTo(X(p.target),Y(p.observed));});ctx.stroke();valid.forEach(p=>{ctx.beginPath();ctx.arc(X(p.target),Y(p.observed),3,0,Math.PI*2);ctx.fill();});const mae=mean(valid.map(p=>Math.abs(p.observed-p.target)));$('calNote').textContent=`Mean absolute calibration error: ${(mae*100).toFixed(1)} pp · ${valid.map(p=>`${(p.target*100).toFixed(0)}→${(p.observed*100).toFixed(1)}`).join(' | ')}`;}
+function renderRolling(){const a=state.records,c=$('rollingCanvas'),{ctx,w,h}=setupCanvas(c);ctx.clearRect(0,0,w,h);const win=52;if(a.length<win)return;const pts=[];for(let i=win-1;i<a.length;i++)pts.push({ts:a[i].entryTs,v:mean(a.slice(i-win+1,i+1).map(x=>x.inside?1:0))});const pad={l:46,r:16,t:18,b:30},min=Math.max(0,Math.min(...pts.map(x=>x.v))-.05),max=Math.min(1,Math.max(...pts.map(x=>x.v))+.05),X=i=>pad.l+i/(pts.length-1)*(w-pad.l-pad.r),Y=v=>h-pad.b-(v-min)/(max-min)*(h-pad.t-pad.b);axes(ctx,w,h,pad,[{x:pad.l,label:date(pts[0].ts).slice(0,7)},{x:w-pad.r,label:date(pts.at(-1).ts).slice(0,7)}],[min,(min+max)/2,max].map(v=>({y:Y(v),label:(v*100).toFixed(0)+'%'})));ctx.strokeStyle=css('--cyan');ctx.lineWidth=1.8;ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(X(i),Y(p.v)):ctx.moveTo(X(i),Y(p.v)));ctx.stroke();ctx.strokeStyle=css('--accent');ctx.setLineDash([4,4]);const all=mean(a.map(x=>x.inside?1:0));ctx.beginPath();ctx.moveTo(pad.l,Y(all));ctx.lineTo(w-pad.r,Y(all));ctx.stroke();ctx.setLineDash([]);}
+function rvSeries(days=30){const arr=[];for(let i=days;i<state.daily.length;i++){const v=rollingRVAt(i,days);if(Number.isFinite(v))arr.push({ts:state.daily[i].ts,v});}return arr;}
+function renderVol(){const rv7=recentRV(7),rv14=recentRV(14),rv30=recentRV(30),rv60=recentRV(60),rv90=recentRV(90),series=rvSeries(30),latestPct=series.length?series.filter(x=>x.v<=rv30).length/series.length:NaN,recent=series.slice(-90).map(x=>x.v),vov=sd(recent),items=[['RV7',Number.isFinite(rv7)?rv7.toFixed(1)+'%':'—','annualized'],['RV14',Number.isFinite(rv14)?rv14.toFixed(1)+'%':'—','annualized'],['RV30',Number.isFinite(rv30)?rv30.toFixed(1)+'%':'—','annualized'],['RV90',Number.isFinite(rv90)?rv90.toFixed(1)+'%':'—','annualized'],['RV30 PCTL',fmtRate(latestPct),'full-history percentile'],['VOL-OF-VOL',Number.isFinite(vov)?vov.toFixed(1)+' vol':'—','SD of RV30, last 90D'],['TERM SHAPE',Number.isFinite(rv7-rv90)?(rv7>rv90?'INVERTED':'UPWARD'):'—','RV7 vs RV90'],['CURRENT REGIME',Number.isFinite(latestPct)?latestPct<1/3?'LOW':latestPct<2/3?'MID':'HIGH':'—','RV30 percentile tercile']];$('volGrid').innerHTML=items.map(([l,v,f])=>`<div class="metric"><div class="m-label">${l}</div><div class="m-value">${v}</div><div class="m-foot">${f}</div></div>`).join('');
+  const c=$('volCanvas'),{ctx,w,h}=setupCanvas(c);ctx.clearRect(0,0,w,h);const vals=[[7,rv7],[14,rv14],[30,rv30],[60,rv60],[90,rv90]].filter(x=>Number.isFinite(x[1]));if(vals.length<2)return;const pad={l:44,r:16,t:18,b:30},min=Math.max(0,Math.min(...vals.map(x=>x[1]))*.85),max=Math.max(...vals.map(x=>x[1]))*1.1,X=i=>pad.l+i/(vals.length-1)*(w-pad.l-pad.r),Y=v=>h-pad.b-(v-min)/(max-min)*(h-pad.t-pad.b);axes(ctx,w,h,pad,vals.map((x,i)=>({x:X(i),label:x[0]+'D'})),[min,(min+max)/2,max].map(v=>({y:Y(v),label:v.toFixed(0)+'%'})));ctx.strokeStyle=css('--accent');ctx.lineWidth=1.8;ctx.beginPath();vals.forEach((p,i)=>i?ctx.lineTo(X(i),Y(p[1])):ctx.moveTo(X(i),Y(p[1])));ctx.stroke();ctx.fillStyle=css('--accent');vals.forEach((p,i)=>{ctx.beginPath();ctx.arc(X(i),Y(p[1]),3,0,Math.PI*2);ctx.fill();});}
+function heatValue(x,pd,cd,metric){const inside=x.ret>=-pd&&x.ret<=cd,noTouch=x.pathMinRet>=-pd&&x.pathMaxRet<=cd;if(metric==='inside')return inside?1:0;if(metric==='noTouch')return noTouch?1:0;if(metric==='lower')return x.ret<-pd?1:0;if(metric==='upper')return x.ret>cd?1:0;if(metric==='severity')return x.ret<-pd?(-pd-x.ret):x.ret>cd?(x.ret-cd):0;return 0;}
+function renderHeatmap(s){const ds=s.mode==='multi'?[5,7.5,10,12.5,15,20]:[.5,1,1.5,2,2.5,3,4],base=state.baseEval,metric=$('heatMetric').value;let html='<thead><tr><th>PUT \\ CALL</th>'+ds.map(x=>`<th>+${x}%</th>`).join('')+'</tr></thead><tbody>';for(const pd of ds){html+=`<tr><th>-${pd}%</th>`;for(const cd of ds){const vals=base.map(x=>heatValue(x,pd,cd,metric)),v=vals.length?mean(vals):NaN,maxSeverity=20,score=metric==='severity'?1-clamp(v/maxSeverity,0,1):(metric==='lower'||metric==='upper'?1-v:v),pct=Math.round((.05+.45*(Number.isFinite(score)?score:0))*100),label=metric==='severity'?(Number.isFinite(v)?v.toFixed(2)+' pp':'—'):fmtRate(v);html+=`<td data-p="${pd}" data-c="${cd}" style="background:color-mix(in srgb,var(--good) ${pct}%,var(--panel))" title="${label}">${label}</td>`;}html+='</tr>';}html+='</tbody>';$('heatTable').innerHTML=html;$('heatTable').querySelectorAll('td').forEach(td=>td.addEventListener('click',()=>{$('strategy').value='strangle';$('rangeMethod').value='manual';syncControls();$('lowerPct').value=-+td.dataset.p;$('upperPct').value=+td.dataset.c;run();window.scrollTo({top:0,behavior:'smooth'});}));}
+function renderDOW(s){const rows=[];for(let wd=0;wd<7;wd++){const b=makeBase(s,true,wd,s.expiry),a=applyRange(b,state.range.lo,state.range.hi,false),n=a.length;rows.push(`<tr><td>${weekdayNames[wd]}${wd===s.weekday?' *':''}</td><td>${n}</td><td>${fmtRate(n?mean(a.map(x=>x.inside?1:0)):NaN)}</td><td>${fmtRate(n?mean(a.map(x=>x.noTouch?1:0)):NaN)}</td><td>${fmtRate(n?mean(a.map(x=>x.lower?1:0)):NaN)}</td><td>${fmtRate(n?mean(a.map(x=>x.upper?1:0)):NaN)}</td></tr>`);}$('dowBody').innerHTML=rows.join('');}
+function renderHorizonSurface(s){const hs=[1,3,7,14,30],ds=[5,7.5,10,12.5,15];let html='<thead><tr><th>EXPIRY \\ RANGE</th>'+ds.map(x=>`<th>±${x}%</th>`).join('')+'</tr></thead><tbody>';for(const h of hs){const b=makeMultiDayBase({...s,mode:'multi'},true,s.weekday,h);html+=`<tr><th>${h}D</th>`;for(const d of ds){const rate=b.length?mean(b.map(x=>x.ret>=-d&&x.ret<=d?1:0)):NaN,pct=Math.round((.05+.45*(Number.isFinite(rate)?rate:0))*100);html+=`<td style="cursor:default;background:color-mix(in srgb,var(--good) ${pct}%,var(--panel))">${fmtRate(rate)}</td>`;}html+='</tr>';}html+='</tbody>';$('horizonTable').innerHTML=html;}
+function renderCases(){const a=state.records,rows=[...a].reverse().slice(0,220);$('caseLabel').textContent=`SHOWING ${rows.length} / ${a.length}`;$('caseBody').innerHTML=rows.map(x=>{const touch=x.touch?`${x.touch.side} ${x.session?x.touch.hours.toFixed(1)+'h':(x.touch.hours/24).toFixed(1)+'d'}`:'—',breach=x.lower?`PUT +${x.lowerExcess.toFixed(2)}pp`:x.upper?`CALL +${x.upperExcess.toFixed(2)}pp`:'—';return`<tr><td>${date(x.entryTs)}</td><td>${fmtUSD(x.entry)}</td><td>${date(x.expiryTs)}</td><td>${fmtPct(x.ret)}</td><td>${fmtPct(x.lo,1)} / ${fmtPct(x.hi,1)}</td><td>${fmtPct(x.pathMinRet,1)} / ${fmtPct(x.pathMaxRet,1)}</td><td>${touch}</td><td>${breach}</td><td><span class="tag ${x.inside?'win':'loss'}">${x.inside?'IN':'OUT'}</span>${x.recovered?' <span class="tag touch">RECOVERED</span>':''}</td></tr>`;}).join('');}
+function erf(x){const sign=x<0?-1:1;x=Math.abs(x);const a1=.254829592,a2=-.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=.3275911,t=1/(1+p*x),y=1-(((((a5*t+a4)*t)+a3)*t+a2)*t+a1)*t*Math.exp(-x*x);return sign*y;}
+function N(x){return .5*(1+erf(x/Math.SQRT2));}function pdf(x){return Math.exp(-.5*x*x)/Math.sqrt(2*Math.PI);}
+function bsGreeks(S,K,T,r,sigma,type){if(!(S>0&&K>0&&T>0&&sigma>0))return{delta:NaN,gamma:NaN,theta:NaN,vega:NaN};const d1=(Math.log(S/K)+(r+.5*sigma*sigma)*T)/(sigma*Math.sqrt(T)),d2=d1-sigma*Math.sqrt(T),gamma=pdf(d1)/(S*sigma*Math.sqrt(T)),vega=S*pdf(d1)*Math.sqrt(T)/100;let delta,theta;if(type==='call'){delta=N(d1);theta=-(S*pdf(d1)*sigma)/(2*Math.sqrt(T))-r*K*Math.exp(-r*T)*N(d2);}else{delta=N(d1)-1;theta=-(S*pdf(d1)*sigma)/(2*Math.sqrt(T))+r*K*Math.exp(-r*T)*N(-d2);}return{delta,gamma,theta:theta/365,vega};}
+function modelTerms(s){const S=currentSpot(),anchor=strategyAnchorSpot(s),credit=anchor*s.credit/100;let kp,kc;if(s.strategy==='straddle'){kp=kc=anchor;}else{kp=anchor*(1+state.range.lo/100);kc=anchor*(1+state.range.hi/100);}return{S,anchor,credit,kp,kc,lowerBE:kp-credit,upperBE:kc+credit};}
+function renderModel(s){const m=modelTerms(s),T=modelHorizonYears(s),p=bsGreeks(m.S,m.kp,T,s.r,s.iv,'put'),c=bsGreeks(m.S,m.kc,T,s.r,s.iv,'call'),net={delta:-(p.delta+c.delta),gamma:-(p.gamma+c.gamma),theta:-(p.theta+c.theta),vega:-(p.vega+c.vega)};$('gDelta').textContent=fnum(net.delta);$('gGamma').textContent=Number.isFinite(net.gamma)?net.gamma.toExponential(3):'—';$('gTheta').textContent=Number.isFinite(net.theta)?'$'+net.theta.toFixed(2):'—';$('gVega').textContent=Number.isFinite(net.vega)?'$'+net.vega.toFixed(2):'—';$('mPut').textContent=fmtUSD(m.kp);$('mCall').textContent=fmtUSD(m.kc);$('mCredit').textContent=fmtUSD(m.credit);$('mBE').textContent=`${fmtUSD(m.lowerBE)} — ${fmtUSD(m.upperBE)}`;}
+function payoffAt(px,m){return m.credit-Math.max(m.kp-px,0)-Math.max(px-m.kc,0);}
+function renderPayoff(s){const c=$('payoffCanvas'),{ctx,w,h}=setupCanvas(c),m=modelTerms(s);ctx.clearRect(0,0,w,h);if(!m.S)return;const minX=Math.max(1,Math.min(m.lowerBE,m.kp)*.72),maxX=Math.max(m.upperBE,m.kc)*1.28,steps=220,ys=[];for(let i=0;i<=steps;i++){const x=minX+(maxX-minX)*i/steps;ys.push(payoffAt(x,m));}let yMin=Math.min(...ys,0),yMax=Math.max(...ys,0);if(yMax-yMin<1){yMax+=1;yMin-=1;}const pad={l:52,r:18,t:18,b:35},X=x=>pad.l+(x-minX)/(maxX-minX)*(w-pad.l-pad.r),Y=y=>h-pad.b-(y-yMin)/(yMax-yMin)*(h-pad.t-pad.b);axes(ctx,w,h,pad,[],[0,.25,.5,.75,1].map(q=>{const y=yMin+(yMax-yMin)*q;return{y:Y(y),label:(y/1000).toFixed(1)+'k'}}));if(yMin<=0&&yMax>=0){ctx.strokeStyle=css('--muted');ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(pad.l,Y(0));ctx.lineTo(w-pad.r,Y(0));ctx.stroke();ctx.setLineDash([]);}ctx.strokeStyle=css('--accent');ctx.lineWidth=2;ctx.beginPath();for(let i=0;i<=steps;i++){const x=minX+(maxX-minX)*i/steps,y=ys[i];i?ctx.lineTo(X(x),Y(y)):ctx.moveTo(X(x),Y(y));}ctx.stroke();for(const [x,label,col] of [[m.lowerBE,'LOW BE',css('--bad')],[m.anchor,'ENTRY',css('--muted')],[m.S,'LIVE',css('--cyan')],[m.upperBE,'HIGH BE',css('--bad')]]){if(x<minX||x>maxX)continue;ctx.strokeStyle=col;ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(X(x),pad.t);ctx.lineTo(X(x),h-pad.b);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle=col;ctx.textAlign='center';ctx.fillText(label,X(x),h-12);}}
+function formatAge(ms){if(!Number.isFinite(ms)||ms<0)return '—';const sec=Math.floor(ms/1000);if(sec<60)return sec+'s';const min=Math.floor(sec/60);if(min<60)return min+'m';return Math.floor(min/60)+'h '+(min%60)+'m';}
+function formatCountdown(ms){if(!Number.isFinite(ms))return '—';if(ms<=0)return '00:00:00';const sec=Math.floor(ms/1000),h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),s=sec%60;return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;}
+async function fetchLiveREST(){const urls=[['BINANCE DATA','https://data-api.binance.vision/api/v3/ticker/price?symbol=BTCUSDT'],['BINANCE','https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT']];for(const [name,url] of urls){try{const r=await fetch(url,{cache:'no-store'});if(!r.ok)continue;const j=await r.json(),px=+j.price;if(px>0){setLivePrice(px,Date.now(),name+' REST');return true;}}catch(_){}}return false;}
+async function fetchEntryPrice(s){const ctx=sessionContext(s);if(!Number.isFinite(ctx.entryTs)||Date.now()<ctx.entryTs){state.live.entryPrice=NaN;state.live.entryTs=ctx.entryTs;state.live.anchorSource='live preview';return;}if(state.live.entryTs===ctx.entryTs&&Number.isFinite(state.live.entryPrice))return;const url=`https://data-api.binance.vision/api/v3/klines?symbol=BTCUSDT&interval=1m&startTime=${ctx.entryTs}&limit=1`;try{const r=await fetch(url,{cache:'no-store'});if(r.ok){const j=await r.json();if(Array.isArray(j)&&j.length&&+j[0][1]>0){state.live.entryPrice=+j[0][1];state.live.entryTs=ctx.entryTs;state.live.anchorSource='Binance 1m entry open';return;}}}catch(_){}const h=lastHistoricalCloseBefore(ctx.entryTs);state.live.entryPrice=Number.isFinite(h)?h:NaN;state.live.entryTs=ctx.entryTs;state.live.anchorSource=Number.isFinite(h)?'repo pre-entry close':'unavailable';}
+function setLivePrice(px,ts,source){if(!(px>0))return;state.live.price=px;state.live.ts=Number.isFinite(ts)?ts:Date.now();state.live.source=source;state.live.status='LIVE';$('latestSpot').textContent=fmtUSD(px);$('liveFeedStatus').textContent='LIVE';$('liveFeedStatus').style.color='var(--good)';queueLiveRender();}
+function queueLiveRender(){if(state.live.renderTimer)return;state.live.renderTimer=setTimeout(async()=>{state.live.renderTimer=null;if(!state.daily.length)return;const s=settings();await fetchEntryPrice(s);renderLivePanel(s);renderZeroDteDesk(s);renderModel(s);renderPayoff(s);},750);}
+function connectLivePrice(){if(state.live.ws){try{state.live.ws.close();}catch(_){}}$('liveFeedStatus').textContent='CONNECTING';const url='wss://data-stream.binance.vision/ws/btcusdt@trade';try{const ws=new WebSocket(url);state.live.ws=ws;let opened=false;const watchdog=setTimeout(()=>{if(!opened){try{ws.close();}catch(_){}fetchLiveREST();}},5000);ws.onopen=()=>{opened=true;clearTimeout(watchdog);state.live.status='LIVE';state.live.retry=0;$('liveFeedStatus').textContent='WS';$('liveFeedStatus').style.color='var(--good)';};ws.onmessage=e=>{try{const j=JSON.parse(e.data),px=+j.p;if(px>0)setLivePrice(px,+(j.E||j.T)||Date.now(),'Binance WS');}catch(_){}};ws.onerror=()=>{};ws.onclose=()=>{clearTimeout(watchdog);state.live.status='RETRY';$('liveFeedStatus').textContent='RETRY';$('liveFeedStatus').style.color='var(--warn)';fetchLiveREST();const wait=Math.min(30000,2000*Math.pow(1.6,state.live.retry++));setTimeout(connectLivePrice,wait);};}catch(_){fetchLiveREST();setTimeout(connectLivePrice,5000);}}
+function renderLivePanel(s){const ctx=sessionContext(s),live=currentSpot(),anchor=strategyAnchorSpot(s),m=modelTerms(s),now=Date.now(),liveFresh=Number.isFinite(state.live.price)&&now-state.live.ts<60000;$('latestSpot').textContent=fmtUSD(live);if(!liveFresh){$('liveFeedStatus').textContent='FALLBACK';$('liveFeedStatus').style.color='var(--warn)';}const ret=anchor>0?(live/anchor-1)*100:NaN,toPut=live>0?(live/m.kp-1)*100:NaN,toCall=live>0?(m.kc/live-1)*100:NaN,inRange=live>=m.kp&&live<=m.kc,remaining=ctx.phase==='ACTIVE'?ctx.expiryTs-now:ctx.phase==='UPCOMING'?ctx.entryTs-now:NaN,remainingYears=ctx.phase==='ACTIVE'?Math.max(0,ctx.expiryTs-now)/(365*24*HOUR):modelHorizonYears(s),ivRemain=Number.isFinite(s.iv)&&remainingYears>0?s.iv*Math.sqrt(remainingYears)*100:NaN,phaseText=ctx.phase==='ACTIVE'?'ACTIVE NOW':ctx.phase==='UPCOMING'?'NEXT SESSION':ctx.phase==='EXPIRED'?'SESSION EXPIRED':'RESEARCH',statusText=inRange?'INSIDE':live<m.kp?'BELOW PUT':'ABOVE CALL',statusClass=inRange?'live-good':'live-bad',items=[['LIVE BTC',fmtUSD(live),liveFresh?state.live.source:'repo fallback'],['PRICE AGE',liveFresh?formatAge(now-state.live.ts):'STALE / FALLBACK',liveFresh?'market feed timestamp':'historical repo value'],['SESSION',phaseText,ctx.label],['ANCHOR BTC',fmtUSD(anchor),state.live.anchorSource||'preview'],['MOVE FROM ANCHOR',Number.isFinite(ret)?fmtPct(ret,2):'—','current BTC vs entry/preview'],['PUT STRIKE',fmtUSD(m.kp),Number.isFinite(toPut)?`${toPut.toFixed(2)}% above put`:'—'],['CALL STRIKE',fmtUSD(m.kc),Number.isFinite(toCall)?`${toCall.toFixed(2)}% below call`:'—'],['RANGE STATUS',`<span class="${statusClass}">${statusText}</span>`,inRange?'current price inside strikes':'current price outside selected strikes'],[ctx.phase==='ACTIVE'?'TIME TO EXPIRY':'TIME TO ENTRY',Number.isFinite(remaining)?formatCountdown(remaining):'—','08:00 UTC = 15:00 Bangkok for default 0DTE'],['IV REMAINING MOVE',Number.isFinite(ivRemain)?`±${ivRemain.toFixed(2)}%`:'—','manual IV · sqrt(remaining time)']];$('liveGrid').innerHTML=items.map(([l,v,f])=>`<div class="metric"><div class="m-label">${l}</div><div class="m-value">${v}</div><div class="m-foot">${f}</div></div>`).join('');$('livePanelLabel').textContent=liveFresh?`${state.live.source.toUpperCase()} · ${formatAge(now-state.live.ts)} OLD`:'LIVE FEED UNAVAILABLE · REPO FALLBACK';}
+function renderOverlap(s){const overlapping=s.mode==='multi'&&s.expiry>7;$('overlapPill').innerHTML=s.mode==='multi'?(overlapping?'OVERLAP <b>YES</b>':'OVERLAP <b>NO</b>'):'SAMPLE <b>FRIDAYS</b>';$('overlapPill').classList.toggle('warningline',overlapping);$('modePill').innerHTML=s.mode==='friday0dte'?'MODE <b>FRI 0DTE</b>':s.mode==='weekend'?'MODE <b>WEEKEND</b>':s.mode==='intraday'?'MODE <b>INTRADAY</b>':'MODE <b>MULTI-DAY</b>';}
+async function setFriday0DteDefaults(){ $('researchMode').value='friday0dte';$('strategy').value='strangle';$('weekday').value='5';$('entryHour').value='0';$('expiryHour').value='8';$('expiry').value='7';$('lookback').value='all';$('regime').value='all';$('rangeMethod').value='manual';$('lowerPct').value='-2';$('upperPct').value='2';$('holdoutPct').value='0.3';state.live.entryPrice=NaN;state.live.entryTs=NaN;syncControls();await fetchEntryPrice(settings());run();}
+function syncControls(){const mode=$('researchMode').value,isStraddle=$('strategy').value==='straddle',isMulti=mode==='multi',isFriday=mode==='friday0dte',isWeekend=mode==='weekend';if(isFriday){$('weekday').value='5';$('expiryHour').value='8';if(+$('entryHour').value>=8)$('entryHour').value='0';}if(isWeekend){$('weekday').value='5';$('entryHour').value='16';$('expiryHour').value='8';}if(mode==='intraday'&&+$('entryHour').value>=+$('expiryHour').value)$('entryHour').value='0';$('weekday').disabled=isFriday||isWeekend;$('entryHour').disabled=isWeekend;$('expiryHour').disabled=isFriday||isWeekend;$('legacyExpiryField').style.display=isMulti?'grid':'none';$('sessionControls').style.display=isMulti?'none':'block';$('strangleBox').style.display=isStraddle?'none':'block';$('straddleBox').style.display=isStraddle?'block':'none';$('rangeMethodField').style.display=isStraddle?'none':'grid';$('autoRangeControls').style.display=!isStraddle&&$('rangeMethod').value!=='manual'?'grid':'none';const eh=+$('entryHour').value,xh=+$('expiryHour').value;if(isWeekend){$('sessionNote').innerHTML='<b>Weekend benchmark proxy:</b> Friday 16:00 → Sunday 08:00 UTC (~40h), matching the timing used in the Deribit Insights weekend-vol study. Price-only: no historical option delta/premium/P&L is inferred.';}else{$('sessionNote').innerHTML=`<b>${isFriday?'Friday 0DTE':'Intraday'} proxy:</b> ${String(eh).padStart(2,'0')}:00 → ${String(xh).padStart(2,'0')}:00 UTC (${Math.max(0,xh-eh)}h). Prices use the last completed hourly close before each mark; actual Deribit 08:00 delivery uses a 07:30–08:00 TWAP.`;}}
+const changeIds=['researchMode','strategy','weekday','expiry','entryHour','expiryHour','lookback','regime','rangeMethod','targetCoverage','lowerPct','upperPct','straddleCreditPct','trainWeeks','wfMethod','wfTarget','bootstrapMode','blockLen','holdoutPct','creditPct','ivPct','rfPct','distView','heatMetric'];
+changeIds.forEach(id=>$(id).addEventListener('change',async()=>{syncControls();state.live.entryPrice=NaN;state.live.entryTs=NaN;await fetchEntryPrice(settings());run();}));$('runBtn').addEventListener('click',run);$('defaultBtn').addEventListener('click',setFriday0DteDefaults);$('themeBtn').addEventListener('click',()=>{const root=document.documentElement;root.dataset.theme=root.dataset.theme==='light'?'dark':'light';renderAll(settings());});
+let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>state.daily.length&&renderAll(settings()),120);});syncControls();loadData().then(()=>fetchEntryPrice(settings()));fetchLiveREST();connectLivePrice();setInterval(()=>{if(!Number.isFinite(state.live.price)||Date.now()-state.live.ts>30000)fetchLiveREST();if(state.daily.length)renderLivePanel(settings());},10000);
+})();
+</script>
+</body>
+</html>
