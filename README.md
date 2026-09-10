@@ -339,6 +339,3 @@ Therefore metrics such as historical option P&L, CAGR, Sharpe, Calmar, profit fa
 
 For research and educational use only. Nothing in this repository is financial advice or a recommendation to trade BTC or options. Short options can have substantial or theoretically unlimited loss exposure depending on the position structure.
 
-## License
-
-No license has been added yet. If you want others to reuse or modify the project, add an explicit open-source license such as MIT.
