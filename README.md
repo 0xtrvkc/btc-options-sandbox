@@ -1,7 +1,8 @@
 # BTC Options Sandbox
 
-A browser-based BTC range-risk research terminal for studying short strangle and short straddle setups using historical BTC price behavior.
-https://0xtrvkc.github.io/btc-options-sandbox/
+A browser-based BTC range-risk research terminal for studying short strangle and short straddle setups using historical BTC price behavior, explicit collateral structures, and hypothetical-credit underwriting scenarios.
+
+[Open the live app](https://0xtrvkc.github.io/btc-options-sandbox/)
 
 The default workflow is built around a **Friday 0DTE short-premium session**:
 
@@ -14,7 +15,7 @@ The project is intentionally designed to answer a narrower and more defensible q
 
 > Given a BTC entry price and a selected put/call range, how often did BTC finish inside that range at expiry, how often did price leave the range before expiry, and how stable was that behavior through history?
 
-It does **not** reconstruct historical option premiums, historical IV, or historical option P&L.
+It does **not** reconstruct historical option premiums, historical IV, or observed historical option P&L. Scenario P&L is clearly labeled and applies one user-supplied hypothetical credit to every historical session.
 
 ## Why this exists
 
@@ -38,7 +39,7 @@ The default preset studies a Friday session from **00:00 UTC to 08:00 UTC**.
 
 For a short strangle, a historical observation is classified as contained when BTC expires between the selected lower and upper boundaries.
 
-For a short straddle, the app uses a user-defined hypothetical total credit as a breakeven-width proxy. This is a model assumption, not reconstructed historical premium.
+For a short straddle, the app uses the same user-defined hypothetical net credit for its historical breakeven band, underwriting scenario, payoff diagram, and model display. This is a model assumption, not reconstructed historical premium.
 
 ### Research presets
 
@@ -132,6 +133,36 @@ Examples include:
 
 A result that changes dramatically after a tiny parameter adjustment should be treated as fragile.
 
+Friday entry-time comparisons are paired by common expiry. The difference in containment is reported with a Newey-West heteroskedasticity-and-autocorrelation-consistent 95% interval rather than treating nearby rules as independent samples.
+
+The containment bootstrap uses 5,000 resamples. Circular moving-block resampling is the default so short-run dependence is retained; IID resampling remains available as a comparison.
+
+## Underwriting and declared capital
+
+The research-informed underwriting layer separates premium income from terminal claims and normalizes results by explicit declared capital. It supports three structures:
+
+- **Fully backed** — short put and call, one BTC covering the call, and cash equal to the put strike
+- **Defined risk** — short put and call with user-sized long put/call protective wings
+- **Cash-secured put** — short put only, with cash equal to the put strike
+
+The default is fully backed. The app intentionally does not offer a naked-call capital mode.
+
+For each historical terminal BTC price, the app reports:
+
+- zero-claim rate
+- option-layer positive rate
+- backed-structure positive rate
+- average option surplus per unit of declared capital
+- average backed return per unit of declared capital
+- raw second moment of the capital-normalized claim
+- worst-5% backed mean
+- maximum backed capital loss
+- declared-capital exceedance count
+
+The raw second moment is a quadratic claim-burden diagnostic. It is not CVaR, default probability, broker margin, or proof that the hypothetical premium was executable.
+
+This separation follows the framework in Pasin Marupanthorn's [*Theory of European Option Underwriting Portfolios*](https://ssrn.com/abstract=7376939), while keeping the app's existing price-only evidence distinct from its hypothetical underwriting layer. The paper motivates the accounting and inference choices; it does not validate BTC 0DTE profitability.
+
 ## Tail-risk diagnostics
 
 Because short-volatility strategies can be negatively skewed, the app does not stop at containment rate.
@@ -141,7 +172,7 @@ It also studies:
 - mean breach severity
 - worst lower breach
 - worst upper breach
-- tail expected shortfall proxies
+- mean underlying return in the worst and best 5% of sessions, explicitly distinguished from strategy expected shortfall
 - largest historical moves
 - concentration of total boundary exceedance in the worst 1, 3, and 5 events
 
@@ -224,9 +255,9 @@ The live market reference is **not** treated as historical research data and doe
 
 It is also not the Deribit settlement index or the exact Deribit settlement TWAP.
 
-## Theoretical payoff and Greeks
+## Structure-aware payoff and Greeks
 
-The sandbox includes a model layer for:
+The sandbox includes a model layer for the selected capital structure:
 
 - payoff diagram
 - net Delta
@@ -234,9 +265,10 @@ The sandbox includes a model layer for:
 - net Theta/day
 - net Vega
 - model put/call strikes
-- hypothetical breakevens
+- structure-aware hypothetical breakevens
+- declared capital
 
-These calculations use user-provided/model inputs such as IV, rate, assumed credit, live BTC when available, and remaining time to expiry.
+The fully backed model includes the long BTC leg. The defined-risk model includes both protective wings. The cash-secured-put model removes the call leg. All calculations use inputs such as IV, rate, assumed credit, live BTC when available, and remaining time to expiry.
 
 They are theoretical diagnostics only.
 
@@ -331,11 +363,10 @@ It does not know the historical:
 - margin impact
 - liquidation path
 
-Therefore metrics such as historical option P&L, CAGR, Sharpe, Calmar, profit factor, or historical strategy APR are intentionally not presented as real results.
+Therefore scenario option P&L must not be interpreted as observed historical performance. CAGR, Sharpe, Calmar, profit factor, and historical strategy APR are intentionally not presented as real results.
 
 `Expiry containment` means BTC finished inside a selected price range. It does **not** automatically mean the corresponding short option position was profitable.
 
 ## Disclaimer
 
-For research and educational use only. Nothing in this repository is financial advice or a recommendation to trade BTC or options. Short options can have substantial or theoretically unlimited loss exposure depending on the position structure.
-
+For research and educational use only. Nothing in this repository is financial advice or a recommendation to trade BTC or options. Even fully backed and defined-risk structures can lose substantial capital.
