@@ -19,8 +19,8 @@
 button,input,select{font:inherit;color:inherit}button{cursor:pointer}.app{min-height:100vh}.topbar{position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
 .topbar-inner{max-width:1700px;margin:auto;padding:10px 14px;display:flex;gap:12px;align-items:center;justify-content:space-between}.brand{display:flex;align-items:center;gap:12px;min-width:0}.brand-mark{width:10px;height:10px;background:var(--accent);box-shadow:0 0 16px color-mix(in srgb,var(--accent) 70%,transparent)}
 .brand h1{font-size:14px;margin:0;letter-spacing:.06em}.subtle{color:var(--muted)}.statusline{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}.pill{border:1px solid var(--line);padding:4px 7px;background:var(--panel);white-space:nowrap;font-size:10px}.pill b{color:var(--accent)}
-.iconbtn{border:1px solid var(--line);background:var(--panel);padding:5px 8px}.shell{max-width:1700px;margin:auto;padding:12px}.grid{display:grid;grid-template-columns:330px minmax(0,1fr);gap:12px}.stack{display:grid;gap:12px}.panel{background:var(--panel);border:1px solid var(--line);box-shadow:var(--shadow);min-width:0}.panel-head{min-height:34px;display:flex;gap:8px;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding:6px 10px;background:var(--panel2)}
-.panel-title{font-size:11px;letter-spacing:.09em;font-weight:700}.panel-body{padding:10px}.controls{position:sticky;top:57px;align-self:start;max-height:calc(100vh - 70px);overflow:auto}.field{display:grid;gap:5px;margin-bottom:10px}.field label{font-size:9px;letter-spacing:.07em;color:var(--muted);text-transform:uppercase}.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.ctrl{width:100%;background:var(--bg);border:1px solid var(--line);padding:8px 9px;outline:none}.ctrl:focus{border-color:var(--accent)}
+.iconbtn{border:1px solid var(--line);background:var(--panel);padding:5px 8px}.topbar-nav{max-width:1700px;margin:auto;padding:0 14px 8px;display:flex;gap:4px;align-items:center}.view-tab{border:1px solid var(--line);background:var(--panel);color:var(--muted);padding:6px 10px;font-size:9px;font-weight:700;letter-spacing:.07em}.view-tab:hover{color:var(--ink);border-color:var(--muted)}.view-tab.active{color:var(--accent);border-color:var(--accent);background:color-mix(in srgb,var(--accent) 9%,var(--panel))}.view-tab:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}.view-tab .tab-hint{color:var(--muted);font-weight:400;margin-left:5px}.shell{max-width:1700px;margin:auto;padding:12px}.app-view[hidden]{display:none!important}.grid{display:grid;grid-template-columns:330px minmax(0,1fr);gap:12px}.stack{display:grid;gap:12px}.panel{background:var(--panel);border:1px solid var(--line);box-shadow:var(--shadow);min-width:0}.panel-head{min-height:34px;display:flex;gap:8px;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding:6px 10px;background:var(--panel2)}
+.panel-title{font-size:11px;letter-spacing:.09em;font-weight:700}.panel-body{padding:10px}.controls{position:sticky;top:91px;align-self:start;max-height:calc(100vh - 104px);overflow:auto}.field{display:grid;gap:5px;margin-bottom:10px}.field label{font-size:9px;letter-spacing:.07em;color:var(--muted);text-transform:uppercase}.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.ctrl{width:100%;background:var(--bg);border:1px solid var(--line);padding:8px 9px;outline:none}.ctrl:focus{border-color:var(--accent)}
 .rangebox{border:1px solid var(--line);background:var(--panel2);padding:9px;margin-bottom:10px}.rangeviz{display:grid;grid-template-columns:auto 1fr auto 1fr auto;align-items:center;gap:6px;margin-top:8px;color:var(--muted);font-size:10px}.rangeviz .bar{height:5px;background:linear-gradient(90deg,var(--bad),var(--line))}.rangeviz .bar.r{background:linear-gradient(90deg,var(--line),var(--bad))}.rangeviz .spot{color:var(--accent)}
 .btn{border:1px solid var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--panel));padding:8px 10px;width:100%;font-weight:700}.btn:hover{background:color-mix(in srgb,var(--accent) 20%,var(--panel))}.btn.secondary{border-color:var(--line);background:var(--panel2)}.tiny{font-size:9px;color:var(--muted)}
 .kpis{display:grid;grid-template-columns:repeat(6,minmax(120px,1fr));gap:1px;background:var(--line);border:1px solid var(--line)}.kpi{background:var(--panel);padding:10px;min-height:82px}.kpi .lab{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}.kpi .val{font-size:22px;line-height:1.15;margin-top:8px;white-space:nowrap}.kpi .foot{font-size:9px;color:var(--muted);margin-top:5px}.val.good{color:var(--good)}.val.bad{color:var(--bad)}.val.accent{color:var(--accent)}.val.warn{color:var(--warn)}
@@ -33,12 +33,13 @@ button,input,select{font:inherit;color:inherit}button{cursor:pointer}.app{min-he
 .tag{padding:2px 5px;border:1px solid var(--line)}.tag.win{color:var(--good);border-color:color-mix(in srgb,var(--good) 50%,var(--line))}.tag.loss{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 50%,var(--line))}.tag.touch{color:var(--warn)}
 .model-note{padding:8px;border-left:2px solid var(--warn);background:color-mix(in srgb,var(--warn) 6%,transparent);font-size:9px;color:var(--muted)}.greeks{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line)}.greek{background:var(--panel);padding:10px}.greek .gname{font-size:9px;color:var(--muted)}.greek .gval{font-size:18px;margin-top:5px}.footbar{max-width:1700px;margin:0 auto;padding:8px 12px 18px;color:var(--muted);font-size:9px}.mono-accent{color:var(--accent)}.sep{height:1px;background:var(--line);margin:10px 0}.error{color:var(--bad)}.warningline{color:var(--warn)}
 .tabs{display:flex;gap:3px}.tab{padding:4px 7px;border:1px solid var(--line);background:var(--panel);font-size:9px;color:var(--muted)}.tab.active{color:var(--accent);border-color:var(--accent)}
+.index-shell{display:grid;gap:12px}.index-hero{border:1px solid var(--accent);background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 9%,var(--panel)),var(--panel) 55%);padding:18px;box-shadow:var(--shadow)}.index-eyebrow{font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.1em}.index-hero h2{font-size:clamp(20px,3vw,34px);line-height:1.08;letter-spacing:-.035em;margin:7px 0 9px;max-width:920px}.index-hero p{color:var(--muted);max-width:1050px;margin:0}.index-hero strong{color:var(--ink)}.index-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:14px}.index-action{width:auto;padding:7px 11px}.index-searchbar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}.index-search{background:var(--panel);border:1px solid var(--line);color:var(--ink);padding:10px 12px;outline:none}.index-search:focus{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 18%,transparent)}.index-search-meta{font-size:9px;color:var(--muted);white-space:nowrap}.truth-grid,.quick-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line)}.truth-card,.quick-step{background:var(--panel);padding:12px;min-width:0}.truth-card .label,.quick-step .step{font-size:8px;color:var(--accent);letter-spacing:.08em;font-weight:700}.truth-card p,.quick-step p{font-size:10px;color:var(--muted);margin:6px 0 0}.quick-step strong{color:var(--ink)}.index-group{display:grid;gap:8px}.index-group-head{display:flex;gap:10px;align-items:baseline;justify-content:space-between}.index-group-head h2{font-size:12px;letter-spacing:.08em;margin:0}.index-group-head p{font-size:9px;color:var(--muted);margin:0}.index-directory{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.index-card{border:1px solid var(--line);background:var(--panel);padding:11px;text-align:left;min-width:0;color:var(--ink);transition:border-color .12s,transform .12s,background .12s}.index-card:hover{border-color:var(--accent);transform:translateY(-1px);background:color-mix(in srgb,var(--accent) 5%,var(--panel))}.index-card:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}.index-card .number{font-size:8px;color:var(--accent);letter-spacing:.08em}.index-card h3{font-size:11px;margin:5px 0 4px}.index-card p{font-size:9px;color:var(--muted);margin:0;line-height:1.55}.index-card .read{display:block;font-size:8px;color:var(--cyan);margin-top:8px}.index-details{border:1px solid var(--line);background:var(--panel)}.index-details>summary{cursor:pointer;list-style:none;padding:10px 12px;background:var(--panel2);font-size:10px;color:var(--accent);font-weight:700;letter-spacing:.07em}.index-details>summary::-webkit-details-marker{display:none}.index-details>summary::after{content:'+';float:right;color:var(--muted)}.index-details[open]>summary::after{content:'−'}.term-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:var(--line);border-top:1px solid var(--line)}.term-row{background:var(--panel);padding:11px;min-width:0}.term-name{font-size:9px;color:var(--cyan);font-weight:700;letter-spacing:.05em}.term-def{font-size:9px;color:var(--muted);margin-top:5px;line-height:1.6}.term-def strong{color:var(--ink)}.unit-chip{display:inline-block;border:1px solid var(--line);padding:1px 4px;color:var(--warn);font-size:8px;margin-left:4px}.index-warning{border-left:3px solid var(--warn);background:color-mix(in srgb,var(--warn) 5%,var(--panel));padding:12px;color:var(--muted);font-size:10px}.index-warning strong{color:var(--warn)}.index-empty{border:1px dashed var(--line);padding:18px;color:var(--muted);text-align:center}.panel,.kpis,.controls{scroll-margin-top:101px}.jump-flash{animation:indexPulse 1.25s ease-out}@keyframes indexPulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 70%,transparent)}35%{box-shadow:0 0 0 5px color-mix(in srgb,var(--accent) 28%,transparent)}100%{box-shadow:var(--shadow)}}.has-help{cursor:help}.has-help::after{content:'?';display:inline-grid;place-items:center;width:12px;height:12px;margin-left:5px;border:1px dotted currentColor;border-radius:50%;font-size:8px;line-height:1;color:var(--cyan);vertical-align:1px;opacity:.85}.has-help:hover::after,.has-help:focus::after{color:var(--accent);opacity:1}.has-help:focus-visible{outline:1px dotted var(--cyan);outline-offset:3px}.help-tooltip{position:fixed;z-index:1000;width:max-content;max-width:min(360px,calc(100vw - 16px));padding:9px 10px;border:1px solid var(--accent);background:var(--panel3);color:var(--ink);box-shadow:0 10px 35px rgba(0,0,0,.4);font-size:10px;line-height:1.55;pointer-events:none}.help-tooltip[hidden]{display:none}.help-tooltip::before{content:'INDEX NOTE';display:block;color:var(--accent);font-size:8px;font-weight:700;letter-spacing:.08em;margin-bottom:4px}
 .summary-strip{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--line);border:1px solid var(--line)}.summary-strip>div{background:var(--panel);padding:8px}.summary-strip .l{font-size:8px;color:var(--muted)}.summary-strip .v{font-size:14px;margin-top:3px}.flexhead{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.select-mini{background:var(--bg);border:1px solid var(--line);padding:4px 6px;font-size:9px}.nowrap{white-space:nowrap}.goal-banner{border:1px solid var(--accent);background:color-mix(in srgb,var(--accent) 7%,var(--panel));padding:9px;margin-bottom:10px}.goal-title{font-size:10px;font-weight:700;color:var(--accent);letter-spacing:.07em}.goal-sub{font-size:9px;color:var(--muted);margin-top:4px}.session-note{border-left:2px solid var(--cyan);padding:7px 8px;background:color-mix(in srgb,var(--cyan) 5%,transparent);font-size:9px;color:var(--muted);margin-bottom:10px}.session-note b{color:var(--cyan)}
 .live-good{color:var(--good)!important}.live-warn{color:var(--warn)!important}.live-bad{color:var(--bad)!important}.live-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:currentColor;margin-right:5px;box-shadow:0 0 8px currentColor}.live-note{border-left:2px solid var(--good);padding:7px 8px;background:color-mix(in srgb,var(--good) 5%,transparent);font-size:9px;color:var(--muted);margin-top:10px}.live-note b{color:var(--good)}
 .report-toggle{display:flex;gap:3px}.report-mode{border:1px solid var(--line);background:var(--panel);color:var(--muted);padding:5px 9px;font-size:9px;font-weight:700;letter-spacing:.05em;white-space:nowrap}.report-mode:hover{color:var(--ink);border-color:var(--muted)}.report-mode.active{color:var(--accent);border-color:var(--accent);background:color-mix(in srgb,var(--accent) 9%,var(--panel))}.report-mode:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}.report-shell{display:grid;gap:10px}.report-meta{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line)}.report-meta-item{background:var(--panel);padding:9px;min-width:0}.report-meta-item .label{font-size:8px;color:var(--muted);letter-spacing:.06em}.report-meta-item .value{font-size:12px;margin-top:4px;overflow-wrap:anywhere}.report-read{border:1px solid var(--line);border-left:3px solid var(--cyan);padding:11px;background:var(--panel2)}.report-read.warn{border-left-color:var(--warn);background:color-mix(in srgb,var(--warn) 5%,var(--panel))}.report-read.bad{border-left-color:var(--bad);background:color-mix(in srgb,var(--bad) 5%,var(--panel))}.report-read .eyebrow{font-size:8px;color:var(--muted);letter-spacing:.08em}.report-read h2{font-size:15px;line-height:1.3;margin:4px 0 0}.report-read p{color:var(--muted);margin:6px 0 0;max-width:1100px}.report-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.report-block{border:1px solid var(--line);background:var(--panel2);padding:11px;min-width:0}.report-block h3{font-size:10px;letter-spacing:.07em;color:var(--accent);margin:0 0 7px}.report-block p{margin:0;color:var(--ink)}.report-list{margin:0;padding-left:18px;color:var(--ink)}.report-list li+li{margin-top:6px}.report-list strong{color:var(--cyan)}.report-limit{border-left:2px solid var(--warn);background:color-mix(in srgb,var(--warn) 5%,transparent);padding:10px;color:var(--muted)}.report-limit strong{color:var(--warn)}.report-empty{padding:18px;border:1px dashed var(--line);color:var(--muted);text-align:center}
-@media(max-width:1200px){.grid{grid-template-columns:1fr}.controls{position:static;max-height:none}.kpis{grid-template-columns:repeat(3,1fr)}.split,.split-even{grid-template-columns:1fr}}
-@media(max-width:760px){body{font-size:12px}.shell{padding:8px}.topbar-inner{padding:8px}.statusline .pill:nth-child(2){display:none}.kpis{grid-template-columns:repeat(2,1fr)}.kpi .val{font-size:18px}.row2,.row3{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}.metric-grid{grid-template-columns:repeat(2,1fr)}.summary-strip{grid-template-columns:repeat(2,1fr)}.greeks{grid-template-columns:repeat(2,1fr)}.canvaswrap{height:265px}.split>.panel>.panel-body>.canvaswrap,.split-even>.panel>.panel-body>.canvaswrap{min-height:265px}.brand .subtle{display:none}#researchReportPanel .panel-head{align-items:flex-start;flex-wrap:wrap}.report-meta{grid-template-columns:repeat(2,minmax(0,1fr))}.report-grid{grid-template-columns:1fr}.report-read h2{font-size:13px}}
-@media(max-width:480px){.report-toggle{width:100%}.report-mode{flex:1}.report-meta{grid-template-columns:1fr}}
+@media(max-width:1200px){.grid{grid-template-columns:1fr}.controls{position:static;max-height:none}.kpis{grid-template-columns:repeat(3,1fr)}.split,.split-even{grid-template-columns:1fr}.index-directory{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){body{font-size:12px}.shell{padding:8px}.topbar-inner{padding:8px}.topbar-nav{padding:0 8px 7px}.view-tab{flex:1}.view-tab .tab-hint{display:none}.statusline .pill:nth-child(2){display:none}.kpis{grid-template-columns:repeat(2,1fr)}.kpi .val{font-size:18px}.row2,.row3{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}.metric-grid{grid-template-columns:repeat(2,1fr)}.summary-strip{grid-template-columns:repeat(2,1fr)}.greeks{grid-template-columns:repeat(2,1fr)}.canvaswrap{height:265px}.split>.panel>.panel-body>.canvaswrap,.split-even>.panel>.panel-body>.canvaswrap{min-height:265px}.brand .subtle{display:none}#researchReportPanel .panel-head{align-items:flex-start;flex-wrap:wrap}.report-meta{grid-template-columns:repeat(2,minmax(0,1fr))}.report-grid{grid-template-columns:1fr}.report-read h2{font-size:13px}.truth-grid,.quick-grid,.index-directory,.term-grid{grid-template-columns:1fr}.index-group-head{display:block}.index-group-head p{margin-top:4px}.index-hero{padding:14px}.index-searchbar{grid-template-columns:1fr}.index-search-meta{white-space:normal}.has-help::after{width:14px;height:14px}}
+@media(max-width:480px){.report-toggle{width:100%}.report-mode{flex:1}.report-meta{grid-template-columns:1fr}.statusline{gap:4px}.statusline .pill:nth-child(3){display:none}}
 </style>
 </head>
 <body>
@@ -52,10 +53,13 @@ button,input,select{font:inherit;color:inherit}button{cursor:pointer}.app{min-he
     <span class="pill" id="modePill">MODE <b>FRI 0DTE</b></span><span class="pill" id="overlapPill">SAMPLE <b>WEEKLY</b></span>
     <button class="iconbtn" id="themeBtn" title="Toggle theme">◐</button>
   </div>
-</div></header>
+</div><nav class="topbar-nav" role="tablist" aria-label="Application views">
+  <button type="button" class="view-tab active" id="researchTab" role="tab" aria-selected="true" aria-controls="researchView" data-view="research">RESEARCH TERMINAL <span class="tab-hint">live model</span></button>
+  <button type="button" class="view-tab" id="indexTab" role="tab" aria-selected="false" aria-controls="indexView" data-view="index">INDEX / GUIDE <span class="tab-hint">what's what</span></button>
+</nav></header>
 
-<main class="shell"><div class="grid">
-<aside class="panel controls">
+<main class="shell"><section class="app-view" id="researchView" role="tabpanel" aria-labelledby="researchTab"><div class="grid">
+<aside class="panel controls" id="setupPanel">
   <div class="panel-head"><span class="panel-title">01 / TEST SPECIFICATION</span><span class="tiny">UTC · PRICE ONLY</span></div>
   <div class="panel-body">
     <div class="goal-banner"><div class="goal-title">DEFAULT GOAL / FRIDAY 0DTE SHORT PREMIUM</div><div class="goal-sub">Sell a short strangle or straddle on Friday and test whether BTC finishes inside your chosen range by the 08:00 UTC expiry. Price-only research; no historical option premium is assumed.</div></div>
@@ -121,8 +125,8 @@ button,input,select{font:inherit;color:inherit}button{cursor:pointer}.app{min-he
   </div>
 </aside>
 
-<section class="stack">
-  <div class="kpis">
+<section class="stack" id="researchStack">
+  <div class="kpis" id="kpiStrip">
     <div class="kpi"><div class="lab">Expiry containment</div><div class="val good" id="kWin">—</div><div class="foot" id="kWinFoot">finish inside range</div></div>
     <div class="kpi"><div class="lab">No-touch proxy</div><div class="val accent" id="kNoTouch">—</div><div class="foot" id="kTouchFoot">path remains inside</div></div>
     <div class="kpi"><div class="lab">Touched + recovered</div><div class="val warn" id="kRecovered">—</div><div class="foot">left range, expired inside</div></div>
@@ -270,7 +274,231 @@ button,input,select{font:inherit;color:inherit}button{cursor:pointer}.app{min-he
     <div class="panel-body"><article class="report-shell" id="researchReport" aria-live="polite"><div class="report-empty">Waiting for research data…</div></article></div>
   </section>
 </section>
-</div></main>
+</div></section>
+
+<section class="app-view" id="indexView" role="tabpanel" aria-labelledby="indexTab" hidden>
+  <div class="index-shell">
+    <section class="index-hero">
+      <div class="index-eyebrow">00 / START HERE</div>
+      <h2>A field guide to every control, number, chart, and limitation.</h2>
+      <p>This terminal studies <strong>BTC range behavior</strong> for short-premium research: where price finished, whether its measured path stayed between the selected boundaries, and how stable those observations were through time. It does <strong>not</strong> reconstruct a historical option chain or promise that a displayed containment rate was tradable at a profitable premium.</p>
+      <div class="index-actions">
+        <button type="button" class="btn index-action" data-jump-id="setupPanel">OPEN TEST SETUP</button>
+        <button type="button" class="btn secondary index-action" data-jump-id="kpiStrip">OPEN MAIN READOUT</button>
+        <button type="button" class="btn secondary index-action" data-jump-id="researchReportPanel">OPEN EXPLAINED REPORT</button>
+      </div>
+    </section>
+
+    <div class="index-searchbar">
+      <input class="index-search" id="indexSearch" type="search" placeholder="Search the index: containment, gamma, bootstrap, panel 13…" autocomplete="off" aria-label="Search the app index" />
+      <span class="index-search-meta" id="indexSearchCount">INDEX READY</span>
+    </div>
+    <div class="index-empty" id="indexEmpty" hidden>No matching index entry. Try a broader term such as “range,” “risk,” “vol,” or a panel number.</div>
+
+    <section class="index-group" data-index-group>
+      <div class="index-group-head"><h2>THE FOUR DATA BOUNDARIES</h2><p>Keep these layers separate when interpreting a result.</p></div>
+      <div class="truth-grid">
+        <article class="truth-card" data-index-item><div class="label">HISTORICAL EVIDENCE</div><p>Repository BTC prices produce entry-to-expiry returns, containment, path proxies, regimes, distributions, and validation tests.</p></article>
+        <article class="truth-card" data-index-item><div class="label">LIVE CONTEXT</div><p>Public Binance BTCUSDT supplies a current market reference, dollar strikes, countdowns, payoff markers, and current model Greeks.</p></article>
+        <article class="truth-card" data-index-item><div class="label">USER SCENARIO</div><p>Credit, IV, interest rate, wing width, and capital structure are assumptions you enter—not recovered historical quotes.</p></article>
+        <article class="truth-card" data-index-item><div class="label">NOT MODELED</div><p>Historical bid/ask, skew surface, fills, fees, slippage, funding, exact Deribit settlement TWAP, and broker-margin survival.</p></article>
+      </div>
+    </section>
+
+    <section class="index-group" data-index-group>
+      <div class="index-group-head"><h2>QUICK READING ORDER</h2><p>A disciplined route from setup to conclusion.</p></div>
+      <div class="quick-grid">
+        <article class="quick-step" data-index-item><div class="step">STEP 1 / DEFINE</div><p><strong>Choose the session and range.</strong> Start with Friday 0DTE, then set strangle distances or a straddle credit-defined band.</p></article>
+        <article class="quick-step" data-index-item><div class="step">STEP 2 / COUNT</div><p><strong>Read containment and no-touch together.</strong> Their gap shows how often expiry alone hides an interim boundary touch.</p></article>
+        <article class="quick-step" data-index-item><div class="step">STEP 3 / INSPECT TAILS</div><p><strong>Check breach severity.</strong> A high win rate can coexist with a few very large escapes beyond the selected boundary.</p></article>
+        <article class="quick-step" data-index-item><div class="step">STEP 4 / CHALLENGE</div><p><strong>Use walk-forward, calibration, holdout, and robustness.</strong> Prefer ideas that survive time and nearby settings.</p></article>
+        <article class="quick-step" data-index-item><div class="step">STEP 5 / PRICE SCENARIO</div><p><strong>Only then inspect payoff and capital.</strong> Treat the supplied credit and IV as scenario inputs, not historical evidence.</p></article>
+        <article class="quick-step" data-index-item><div class="step">STEP 6 / REPORT</div><p><strong>Finish at panel 21.</strong> Kid Mode translates the result; Quant Mode exposes diagnostics, flags, and scope limits.</p></article>
+      </div>
+    </section>
+
+    <section class="index-group" data-index-group>
+      <div class="index-group-head"><h2>PANEL DIRECTORY / SETUP + MAIN READOUT</h2><p>Click a card to jump into that part of the terminal.</p></div>
+      <div class="index-directory">
+        <button type="button" class="index-card" data-index-item data-jump-id="setupPanel"><span class="number">01 / INPUTS</span><h3>Test Specification</h3><p>Defines session timing, strategy interpretation, sample, range rule, validation design, hypothetical credit, backing, IV, and rate.</p><span class="read">OPEN PANEL →</span></button>
+        <button type="button" class="index-card" data-index-item data-jump-id="kpiStrip"><span class="number">MAIN / OUTPUTS</span><h3>Six headline KPIs</h3><p>The fastest read of terminal containment, path containment, recovered touches, tail split, effective sample size, and session volatility.</p><span class="read">OPEN READOUT →</span></button>
+        <button type="button" class="index-card" data-index-item data-jump-id="zeroDtePanel"><span class="number">02 / SESSION</span><h3>Friday 0DTE Desk</h3><p>Translates the chosen session into hours, empirical tail ranges, model-IV move, dollar strikes, and entry/expiry proxy quality.</p><span class="read">OPEN PANEL →</span></button>
+        <button type="button" class="index-card" data-index-item data-jump-id="livePanel"><span class="number">02B / NOW</span><h3>Live Session Monitor</h3><p>Shows current BTC, anchor price, distance to strikes, range status, time remaining, and the IV-scaled move for the remaining horizon.</p><span class="read">OPEN PANEL →</span></button>
+      </div>
+    </section>
+
+    <section class="index-group" data-index-group>
+      <div class="index-group-head"><h2>PANEL DIRECTORY / DISTRIBUTION + LOSS SHAPE</h2><p>What the sample looked like and how the range failed.</p></div>
+      <div class="index-directory">
+        <button type="button" class="index-card" data-index-item data-jump-section="03"><span class="number">03 / DISTRIBUTION</span><h3>Expiry Return Distribution</h3><p>Switches among histogram, empirical CDF, and normal Q-Q views to reveal shape, percentiles, asymmetry, and non-normal tails.</p><span class="read">OPEN PANEL →</span></button>
+        <button type="button" class="index-card" data-index-item data-jump-section="04"><span class="number">04 / DIAGNOSTICS</span><h3>Descriptives + Diagnostics</h3><p>SPSS-like summary of center, spread, percentiles, skew, kurtosis, normality, confidence intervals, and return dependence.</p><span class="read">OPEN PANEL →</span></button>
+        <button type="button" class="index-card" data-index-item data-jump-section="05"><span class="number">05 / PATH RISK</span><h3>Breach &amp; Path Risk</h3><p>Measures how far BTC escaped, which boundary was touched first, when touches occurred, and what expiry-only scoring hides.</p><span class="read">OPEN PANEL →</span></button>
+        <button type="button" class="index-card" data-index-item data-jump-id="underwritingPanel"><span class="number">05B / CAPITAL</span><h3>Underwriting &amp; Capital</h3><p>Applies one hypothetical credit across history and separates option claims from the selected fully backed, defined-risk, or CSP structure.</p><span class="read">OPEN PANEL →</span></button>
+      </div>
+    </section>
+
+    <section class="index-group" data-index-group>
+      <div class="index-group-head"><h2>PANEL DIRECTORY / VALIDATION</h2><p>Tests whether the attractive number survives without hindsight.</p></div>
+      <div class="index-directory">
+        <button type="button" class="index-card" data-index-item data-jump-section="06"><span class="number">06 / OOS</span><h3>Walk-Forward Out-of-Sample</h3><p>Builds each historical range using only trades already expired before that entry, then scores the unseen next observation.</p><span class="read">OPEN PANEL →</span></button>
+        <button type="button" class="index-card" data-index-item data-jump-section="07"><span class="number">07 / RELIABILITY</span><h3>Calibration</h3><p>Compares requested containment targets with observed walk-forward containment. Points near the diagonal are better calibrated.</p><span class="read">OPEN PANEL →</span></button>
+        <button type="button" class="index-card" data-index-item data-jump-section="08"><span class="number">08 / TIME</span><h3>Rolling Stability</h3><p>Plots containment over moving 52-trade windows so one full-sample rate cannot hide strong and weak historical chapters.</p><span class="read">OPEN PANEL →</span></button>
+        <button type="button" class="index-card" data-index-item data-jump-section="09"><span class="number">09 / REGIME</span><h3>Realized Vol Regime</h3><p>Places current realized volatility across several windows and shows percentile, volatility-of-volatility, and term shape.</p><span class="read">OPEN PANEL →</span></button>
+      </div>
+    </section>
+
+    <section class="index-group" data-index-group>
+      <div class="index-group-head"><h2>PANEL DIRECTORY / RANGE DESIGN + ROBUSTNESS</h2><p>Explore nearby policies instead of trusting one hand-picked setting.</p></div>
+      <div class="index-directory">
+        <button type="button" class="index-card" data-index-item data-jump-section="10"><span class="number">10 / GRID</span><h3>Strike-Distance Heatmap</h3><p>Compares put and call distances across containment, no-touch, side-specific breach, or mean breach severity. Cells can apply a range.</p><span class="read">OPEN PANEL →</span></button>
+        <button type="button" class="index-card" data-index-item data-jump-section="11"><span class="number">11 / WEEKDAY</span><h3>Day-of-Week Study</h3><p>Replays the same range and horizon across entry weekdays to reveal whether Friday behaves differently from other days.</p><span class="read">OPEN PANEL →</span></button>
+        <button type="button" class="index-card" data-index-item data-jump-section="12"><span class="number">12 / SURFACE</span><h3>Horizon × Range Surface</h3><p>Shows how containment changes as both holding period and symmetric boundary width change.</p><span class="read">OPEN PANEL →</span></button>
+        <button type="button" class="index-card" data-index-item data-jump-id="sensitivityPanel"><span class="number">13 / TIMING</span><h3>Friday Entry-Time Sensitivity</h3><p>Compares nearby entry hours against the selected baseline using matched expiries and a Newey–West confidence interval.</p><span class="read">OPEN PANEL →</span></button>
+        <button type="button" class="index-card" data-index-item data-jump-id="benchmarkPanel"><span class="number">14 / CONTROL</span><h3>Deribit-Style Weekend Benchmark</h3><p>Contrasts Friday 0DTE price behavior with the roughly 40-hour weekend window using the same history and percentage boundaries.</p><span class="read">OPEN PANEL →</span></button>
+        <button type="button" class="index-card" data-index-item data-jump-section="15"><span class="number">15 / WIDTH</span><h3>Required Range Ladder</h3><p>Reports empirical equal-tail, minimum-width, and symmetric boundaries needed for several target containment levels.</p><span class="read">OPEN PANEL →</span></button>
+        <button type="button" class="index-card" data-index-item data-jump-section="16"><span class="number">16 / FRAGILITY</span><h3>Parameter Robustness</h3><p>Moves entry time and range width slightly. A small performance span suggests the result is less dependent on one exact setting.</p><span class="read">OPEN PANEL →</span></button>
+        <button type="button" class="index-card" data-index-item data-jump-section="17"><span class="number">17 / HOLDOUT</span><h3>Holdout + Tail Concentration</h3><p>Compares an earlier training period with the latest unseen block and measures whether a few escapes dominate total breach severity.</p><span class="read">OPEN PANEL →</span></button>
+      </div>
+    </section>
+
+    <section class="index-group" data-index-group>
+      <div class="index-group-head"><h2>PANEL DIRECTORY / MODEL + AUDIT TRAIL</h2><p>Translate the range into a declared scenario, then inspect every case.</p></div>
+      <div class="index-directory">
+        <button type="button" class="index-card" data-index-item data-jump-section="18"><span class="number">18 / PAYOFF</span><h3>Hypothetical Structure Payoff</h3><p>Plots expiry P&amp;L for one BTC short notional under the chosen backing, strikes, wings, and user-supplied net credit.</p><span class="read">OPEN PANEL →</span></button>
+        <button type="button" class="index-card" data-index-item data-jump-section="19"><span class="number">19 / SENSITIVITIES</span><h3>Model Structure Greeks</h3><p>Black–Scholes snapshot of net delta, gamma, theta, and vega using current BTC, fixed entry-anchored strikes, manual IV/rate, and remaining time.</p><span class="read">OPEN PANEL →</span></button>
+        <button type="button" class="index-card" data-index-item data-jump-section="20"><span class="number">20 / ROWS</span><h3>Historical Cases</h3><p>Audit table for entry, expiry, return, path range, first touch, boundary excess, terminal result, scenario option P&amp;L, and backed return.</p><span class="read">OPEN PANEL →</span></button>
+        <button type="button" class="index-card" data-index-item data-jump-id="researchReportPanel"><span class="number">21 / INTERPRET</span><h3>Research Report</h3><p>Auto-synced narrative. Kid Mode explains the result plainly; Quant Mode exposes uncertainty, stability, tails, and hard scope limits.</p><span class="read">OPEN PANEL →</span></button>
+      </div>
+    </section>
+
+    <section class="index-group" data-index-group>
+      <div class="index-group-head"><h2>CONTROL REFERENCE</h2><p>What changing each input actually changes.</p></div>
+      <details class="index-details" open>
+        <summary>OPEN CONTROL DICTIONARY</summary>
+        <div class="term-grid">
+          <article class="term-row" data-index-item><div class="term-name">RESEARCH PRESET</div><div class="term-def">Chooses the session builder: Friday 0DTE, weekend benchmark, custom same-day intraday, or multi-day research. It changes eligible timestamps and holding period.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">STRATEGY INTERPRETATION</div><div class="term-def"><strong>Strangle</strong> treats the lower and upper percentages as OTM strike distances. <strong>Straddle</strong> anchors both strikes at entry spot and uses the hypothetical credit as the ± breakeven band.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">ENTRY / EXPIRY MARK UTC</div><div class="term-def">Requested session clock marks. Historical tests use the last completed intraday observation before each mark, preventing a future bar from leaking into the test.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">EVALUATION LOOKBACK</div><div class="term-def">Limits the scored sample to recent years or all available data. Shorter windows are more current but have fewer observations and wider uncertainty.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">REGIME FILTER</div><div class="term-def">Keeps entries matching volatility percentile, 200-day trend, 30-day momentum, or drawdown state known before entry. Narrow filters can create small samples.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">STRIKE RANGE METHOD</div><div class="term-def"><strong>Manual</strong> uses your distances. <strong>Equal-tail</strong> allocates misses to both tails. <strong>Minimum-width</strong> finds the narrowest zero-spanning empirical interval that covers the target sample share.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">TARGET CONTAINMENT</div><div class="term-def">Coverage requested from an empirical auto-range. It is an in-sample construction target here; panel 07 checks whether walk-forward observations achieved it.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">PUT / CALL STRIKE DISTANCE</div><div class="term-def">Percentage from entry anchor to each short strike. Put distance is negative; call distance is positive. These are strike locations, not premium-adjusted breakevens.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">WALK-FORWARD TRAINING WINDOW</div><div class="term-def">Amount of already completed history available to each simulated decision. “All prior” expands over time; fixed windows forget older regimes.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">WF MODEL / TARGET</div><div class="term-def">Selects equal-tail or minimum-width estimation and its requested coverage for the no-lookahead walk-forward test.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">BOOTSTRAP / BLOCK LENGTH</div><div class="term-def">Controls uncertainty resampling. Moving blocks preserve short sequences of dependent observations; IID treats every observation as freely exchangeable.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">CHRONOLOGICAL HOLDOUT</div><div class="term-def">Reserves the latest 20–40% as unseen time. The range is fitted on the earlier portion, then evaluated on this later block.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">HYPOTHETICAL NET CREDIT</div><div class="term-def">Scenario premium as a percent of entry spot. The same input is repeated for every historical case; the app does not claim that credit existed in the market.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">CAPITAL STRUCTURE</div><div class="term-def"><strong>Fully backed</strong> uses one BTC for the call plus put-strike cash. <strong>Defined risk</strong> buys protective wings. <strong>CSP</strong> writes only the cash-secured put.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">PROTECTIVE WING WIDTH</div><div class="term-def">Distance from each short strike to its long option in defined-risk mode. Wider wings allow a larger maximum claim and require more declared capital.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">MODEL IV ANNUALIZED</div><div class="term-def">Manual implied-volatility input used only for current theoretical move and Black–Scholes Greeks. It does not affect historical BTC returns or containment.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">RISK-FREE RATE</div><div class="term-def">Annualized rate in the Black–Scholes snapshot. For an hours-long horizon its numerical effect is usually small, but it remains an explicit assumption.</div></article>
+        </div>
+      </details>
+    </section>
+
+    <section class="index-group" data-index-group>
+      <div class="index-group-head"><h2>GLOSSARY / RANGE + OUTCOMES</h2><p>The language used in the headline readout and case table.</p></div>
+      <details class="index-details" open>
+        <summary>OPEN CORE OUTCOME TERMS</summary>
+        <div class="term-grid">
+          <article class="term-row" data-index-item><div class="term-name">0DTE</div><div class="term-def">“Zero days to expiry.” Entry and expiry occur on the same UTC calendar day. The default study is Friday 00:00→08:00 UTC.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">EXPIRY CONTAINMENT</div><div class="term-def">Share of matching sessions whose expiry return finished between the selected lower and upper boundaries, inclusive. It is a terminal-location statistic—not an option win rate.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">NO-TOUCH PROXY</div><div class="term-def">Share whose measured intraday path never closed outside the range. With hourly-close data, moves between observations can be missed; it is not a tick-level barrier test.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">TOUCHED + RECOVERED</div><div class="term-def">BTC left the range on the measured path but returned inside by expiry. This exposes adjustment pressure hidden by terminal containment.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">LOWER / UPPER BREACH</div><div class="term-def">Fraction finishing below the put-side boundary versus above the call-side boundary. The split helps show directional tail asymmetry.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">BOUNDARY EXCESS</div><div class="term-def">How many percentage points an outside expiry traveled beyond the breached boundary. Example: −3% return against a −2% boundary equals 1 pp lower excess.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">EFFECTIVE N</div><div class="term-def">Raw observation count discounted for lag-1 dependence in the inside/outside sequence. It is a rough information-size diagnostic, not a replacement for full time-series modeling.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">HORIZON / SESSION σ <span class="unit-chip">%</span></div><div class="term-def">Sample standard deviation of entry-to-expiry percentage returns for matching sessions. It is not annualized unless explicitly labeled.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">PERCENTAGE POINT (pp)</div><div class="term-def">Absolute difference between percentages. A change from 70% to 75% is +5 pp, not +5% relative growth.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">ABSOLUTE MOVE |RETURN|</div><div class="term-def">Directionless size of the entry-to-expiry return. A −3% and +3% return both have a 3% absolute move.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">EQUAL-TAIL RANGE</div><div class="term-def">Empirical interval with the uncovered probability divided equally between lower and upper tails. It can be asymmetric in distance around zero.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">MINIMUM-WIDTH RANGE</div><div class="term-def">Narrowest observed return interval spanning zero that contains the requested fraction. It may place more uncovered cases in one tail.</div></article>
+        </div>
+      </details>
+    </section>
+
+    <section class="index-group" data-index-group>
+      <div class="index-group-head"><h2>GLOSSARY / STATISTICS + VALIDATION</h2><p>How to read uncertainty, tail shape, and stability.</p></div>
+      <details class="index-details">
+        <summary>OPEN STATISTICAL TERMS</summary>
+        <div class="term-grid">
+          <article class="term-row" data-index-item><div class="term-name">EMPIRICAL DISTRIBUTION</div><div class="term-def">The observed historical returns themselves, without forcing a normal or other parametric shape.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">HISTOGRAM</div><div class="term-def">Counts returns inside value bins. Useful for clusters, asymmetry, multiple peaks, and unusually thick tails; appearance depends on bin width.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">ECDF</div><div class="term-def">Empirical cumulative distribution function: at each return, the share of observations less than or equal to it. Percentiles can be read directly.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">NORMAL Q-Q</div><div class="term-def">Plots observed quantiles against normal-theory quantiles. A straight diagonal is normal-like; curved or extreme departures flag skew or heavy tails.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">MEAN / MEDIAN</div><div class="term-def">Mean is the arithmetic average and is tail-sensitive. Median is the middle observation and is more resistant to extreme sessions.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">SKEWNESS</div><div class="term-def">Standardized asymmetry. Negative values indicate a longer/heavier downside tail; positive values indicate the upside tail dominates.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">EXCESS KURTOSIS</div><div class="term-def">Tail weight and peakedness relative to a normal distribution, whose excess kurtosis is zero. Positive values often signal more extreme observations.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">JARQUE–BERA / JB P-VALUE</div><div class="term-def">Normality diagnostic based on skewness and kurtosis. A small p-value argues against normality; dependence can make the textbook p-value optimistic.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">ACF(1)</div><div class="term-def">Lag-1 autocorrelation. Return ACF measures directional persistence; |return| and return² ACF help reveal volatility clustering.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">WILSON 95% CI</div><div class="term-def">Binomial confidence interval for terminal containment. It behaves better than the simple normal approximation, especially with modest samples or extreme rates.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">BOOTSTRAP 95% CI</div><div class="term-def">Re-estimates containment across 5,000 deterministic resamples. Moving-block mode preserves local ordering; it still cannot recreate unseen market regimes.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">±2σ TAIL MULTIPLIER</div><div class="term-def">Observed share beyond two sample standard deviations divided by the normal benchmark of about 4.55%. Above 1× means more such extremes than normal theory expects.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">WALK-FORWARD OUT-OF-SAMPLE</div><div class="term-def">At each historical entry, the model trains only on observations whose expiries already occurred. This blocks direct future leakage.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">CALIBRATION</div><div class="term-def">Agreement between requested and observed walk-forward containment. An 80% target that contains 72% has a −8 pp calibration error.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">ROLLING STABILITY</div><div class="term-def">Repeats the score through moving 52-trade windows. A wide min-to-max span shows strong time dependence even if the full average looks attractive.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">CHRONOLOGICAL HOLDOUT</div><div class="term-def">Fits on an earlier period and evaluates once on the latest reserved period. Unlike random splitting, it respects market time order.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">NEWEY–WEST / HAC 95% CI</div><div class="term-def">Confidence interval for matched policy differences that adjusts standard errors for heteroskedasticity and short-lag autocorrelation.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">ROBUSTNESS SPAN</div><div class="term-def">Highest minus lowest containment across nearby entry-time and boundary-width settings. Smaller suggests less sensitivity to one exact parameter choice.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">TAIL CONCENTRATION SHARE</div><div class="term-def">Fraction of total boundary excess caused by the largest one, three, or five breach events. High concentration warns that a few sessions dominate risk.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">REGIME FILTER</div><div class="term-def">Conditional slice defined using information available before entry. Useful for context, but repeated filter hunting raises selection-bias risk.</div></article>
+        </div>
+      </details>
+    </section>
+
+    <section class="index-group" data-index-group>
+      <div class="index-group-head"><h2>GLOSSARY / OPTIONS + CAPITAL</h2><p>How the hypothetical underwriting layer is constructed.</p></div>
+      <details class="index-details">
+        <summary>OPEN OPTIONS AND RISK TERMS</summary>
+        <div class="term-grid">
+          <article class="term-row" data-index-item><div class="term-name">SHORT STRANGLE</div><div class="term-def">Short OTM put plus short OTM call with different strikes. The strike band is narrower than the premium-adjusted expiry profit band because received credit extends breakevens.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">SHORT STRADDLE PROXY</div><div class="term-def">Short put and call at the entry anchor. Because historical option premium is absent, the user-supplied net credit defines the assumed ± expiry breakeven band.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">OTM</div><div class="term-def">Out of the money: put strike below spot or call strike above spot at entry. OTM does not mean safe or guaranteed to expire worthless.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">NO-CLAIM CORRIDOR / RATE</div><div class="term-def">Price interval where terminal intrinsic claim on the short option layer is zero, and the fraction of historical expiries landing there.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">OPTION-LAYER BREAKEVEN</div><div class="term-def">Short-strike boundary adjusted outward by the shared credit. It describes the modeled short-option layer, not necessarily the combined backed structure.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">OPTION SURPLUS</div><div class="term-def">Hypothetical credit minus terminal net intrinsic claim. It omits historical mark-to-market path, fills, and transaction costs.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">FULLY BACKED</div><div class="term-def">One BTC backs the short call and cash equal to the put strike backs assignment. The displayed backed P&amp;L includes the BTC leg.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">DEFINED RISK / PROTECTIVE WINGS</div><div class="term-def">Long farther-OTM put and call cap the option structure’s terminal claim. Declared capital is the larger wing width per one-BTC notional.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">CASH-SECURED PUT (CSP)</div><div class="term-def">Only the short put is modeled, with cash equal to its strike. The call is not written; the credit input is treated as put credit.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">BACKED RETURN</div><div class="term-def">Combined scenario P&amp;L divided by declared capital. In fully backed mode it includes one BTC’s spot change; in defined risk it includes long-wing payoffs.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">DECLARED CAPITAL</div><div class="term-def">Normalizer used by the app: entry BTC plus put-strike cash for fully backed, maximum wing width for defined risk, or put strike for CSP.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">CAPITAL EXCEEDANCE</div><div class="term-def">A scenario where modeled backed loss is greater than declared capital. This diagnostic is not a broker liquidation or margin simulation.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">CLAIM RAW SECOND MOMENT</div><div class="term-def">Average squared claim-to-capital ratio, E[(claim/capital)²]. It penalizes large claims strongly but is not CVaR, VaR, or default probability.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">WORST-5% BACKED</div><div class="term-def">Mean of the worst 5% of modeled backed returns. It resembles an empirical tail-average scenario statistic but is conditional on hypothetical credit and expiry-only accounting.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">DELTA (Δ)</div><div class="term-def">Approximate dollar-value change for a $1 move in BTC under the current Black–Scholes snapshot. Net delta includes backing legs selected by capital mode.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">GAMMA (Γ)</div><div class="term-def">Rate at which delta changes as BTC moves. Short options usually contribute negative gamma; long wings contribute positive gamma.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">THETA (Θ / DAY)</div><div class="term-def">Modeled change in option value for one day passing, all else equal. It is a local snapshot and can be overwhelmed by BTC or IV changes.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">VEGA</div><div class="term-def">Modeled dollar-value change for a one-volatility-point rise in IV. Short options usually have negative vega; protective long wings offset part of it.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">IMPLIED VOLATILITY (IV)</div><div class="term-def">Market/model volatility input embedded in option prices. Here it is manual and affects only theoretical move and Greeks—not the historical sample.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">REALIZED VOLATILITY (RV)</div><div class="term-def">Annualized standard deviation estimated from historical BTC log returns over a stated window such as 7, 30, or 90 days.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">MODEL IV / RV</div><div class="term-def">Manual annualized IV divided by annualized realized volatility for the comparable session. It is context, not a complete volatility-risk-premium trade signal.</div></article>
+        </div>
+      </details>
+    </section>
+
+    <section class="index-group" data-index-group>
+      <div class="index-group-head"><h2>GLOSSARY / DATA + TIMING</h2><p>Exactly what the clocks and feeds mean.</p></div>
+      <details class="index-details">
+        <summary>OPEN DATA AND SESSION TERMS</summary>
+        <div class="term-grid">
+          <article class="term-row" data-index-item><div class="term-name">ENTRY ANCHOR BTC</div><div class="term-def">BTC reference used to convert percentage distances into fixed dollar strikes. During/after a session it prefers the session entry price; before entry it is a live preview.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">LAST COMPLETED 1H CLOSE</div><div class="term-def">Most recent repository intraday close strictly before the requested UTC mark. This avoids using a bar that had not finished at decision time.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">DERIBIT DELIVERY TWAP</div><div class="term-def">The actual 08:00 UTC settlement uses an index average over 07:30–08:00. This terminal does not reconstruct it; the prior completed hourly close is only a proxy.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">LIVE BTC / PRICE AGE</div><div class="term-def">Public Binance BTCUSDT reference and time since its last update. If unavailable or stale, the app falls back to the latest repository price.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">PATH RESOLUTION</div><div class="term-def">Frequency of observations used for no-touch and first-touch estimates. Hourly closes can miss intrabar extremes; multi-day studies may fall back to daily observations.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">MODEL IV REMAINING MOVE</div><div class="term-def">IV × √(remaining years), displayed as an approximate ± percentage move. It is a one-standard-deviation convention, not a forecast interval guarantee.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">PROXY-SENSITIVE</div><div class="term-def">Share of expiries within 0.25 percentage points of either selected boundary. A high rate means the hourly settlement approximation could flip more classifications.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">REPOSITORY FALLBACK</div><div class="term-def">When live market access is stale or unavailable, display-only live fields use the newest saved price. Historical tests always remain tied to repository datasets.</div></article>
+        </div>
+      </details>
+    </section>
+
+    <div class="index-warning"><strong>FINAL INTERPRETATION RULE:</strong> containment answers “where did BTC finish?”; no-touch answers “did the measured path remain inside?”; underwriting answers “what would this one assumed credit do at expiry?” None of those alone answers “could I repeatedly execute this trade after costs and survive broker margin?”</div>
+  </div>
+</section>
+</main>
+<div class="help-tooltip" id="contextHelpTooltip" role="tooltip" hidden></div>
 <footer class="footbar">BTC VOL LAB · Default: Friday 0DTE short-premium range research. Containment/no-touch statistics describe BTC range behavior. Underwriting, payoff and Greeks are explicit hypothetical-credit scenarios using fully backed or defined-risk structures; they are not reconstructed option trades. Walk-forward ranges use only information available before each historical entry.</footer>
 </div>
 <script>
@@ -283,6 +511,198 @@ const SOURCES={
 };
 const $=id=>document.getElementById(id), HOUR=36e5, DAY=864e5;
 const state={daily:[],intraday:[],intradayHours:NaN,pathLabel:'daily observations',latest:null,latestIntraday:null,features:[],baseAll:[],baseEval:[],records:[],range:{lo:-2,hi:2},wf:[],cal:[],reportMode:'kid',live:{price:NaN,ts:NaN,source:'',status:'CONNECTING',ws:null,retry:0,renderTimer:null,entryPrice:NaN,entryTs:NaN,anchorSource:'preview'}};
+const HELP_TEXT={
+  'TEST SPECIFICATION':'All assumptions for the active study. Changing a control rebuilds the sample, range, validation tests, scenario accounting, and report.',
+  'FRIDAY 0DTE DESK':'Session summary: timing, sample size, empirical ranges, strike prices, model-IV move, and sensitivity to the hourly settlement proxy.',
+  'LIVE SESSION MONITOR':'Current-market context only. Live BTC updates strikes, countdowns, payoff markers, and Greeks; it never rewrites historical results.',
+  'EXPIRY RETURN DISTRIBUTION':'Observed entry-to-expiry BTC returns shown as a histogram, empirical CDF, or normal Q-Q plot.',
+  'DESCRIPTIVES + DIAGNOSTICS':'Summary statistics, tail-shape tests, confidence intervals, and lag-1 dependence for the currently matched return sample.',
+  'BREACH & PATH RISK':'Measures boundary-touch behavior and the size, direction, and timing of sessions that escape the selected range.',
+  'UNDERWRITING & CAPITAL':'Scenario accounting using one user-supplied credit. It separates option claims from backing-leg P&L and is not a historical option-fill backtest.',
+  'WALK-FORWARD OUT-OF-SAMPLE':'At each entry, estimates a range only from trades that had already expired, then scores the unseen next case.',
+  'CALIBRATION':'Compares requested walk-forward coverage with the coverage actually observed. Closer to the diagonal means better calibration.',
+  'ROLLING STABILITY':'Containment through moving 52-trade windows. Large changes reveal that the full-sample average is time-dependent.',
+  'REALIZED VOL REGIME':'Current annualized realized volatility across multiple lookback windows, plus percentile, term shape, and volatility-of-volatility.',
+  'STRIKE-DISTANCE HEATMAP':'Compares many put/call distances under the selected metric. Click a result cell to apply that manual strangle range.',
+  'DAY-OF-WEEK STUDY':'Uses the same horizon and boundaries on every entry weekday to check whether Friday behavior is unusual.',
+  'HORIZON × RANGE SURFACE':'Containment across several holding periods and symmetric range widths.',
+  'FRIDAY ENTRY-TIME SENSITIVITY':'Compares nearby entry hours on matched expiries; the HAC interval adjusts the paired difference for time dependence.',
+  'DERIBIT-STYLE WEEKEND BENCHMARK':'Price-behavior control comparing Friday 0DTE with Friday 16:00 to Sunday 08:00. No historical option P&L is inferred.',
+  'REQUIRED RANGE LADDER':'Empirical boundary widths needed to contain 50% through 95% of historical sessions.',
+  'PARAMETER ROBUSTNESS':'Moves entry time and range width slightly to show whether the result depends on one precise setting.',
+  'HOLDOUT + TAIL CONCENTRATION':'Tests an unseen recent period and measures how much total breach severity comes from the largest few events.',
+  'HYPOTHETICAL STRUCTURE PAYOFF':'Expiry payoff for one BTC short notional under the selected strikes, credit, backing, and protective wings.',
+  'MODEL STRUCTURE GREEKS':'Current Black–Scholes sensitivities using live BTC when available, manual IV/rate, fixed entry strikes, and remaining time.',
+  'HISTORICAL CASES':'Row-level audit trail for returns, path extrema, first touches, boundary excess, and hypothetical expiry accounting.',
+  'RESEARCH REPORT':'Narrative interpretation synchronized to every active control. Quant Mode includes uncertainty, stability flags, and scope limits.',
+  'RESEARCH PRESET':'Chooses the session builder: Friday 0DTE, weekend, custom intraday, or a legacy multi-day horizon.',
+  'STRATEGY INTERPRETATION':'Strangle uses separate OTM strike distances. Straddle anchors both strikes at entry spot and uses credit as the assumed ± breakeven width.',
+  'ENTRY WEEKDAY':'UTC weekday on which matching sessions begin. Friday is locked for the Friday 0DTE and weekend presets.',
+  'EXPIRY HORIZON':'Calendar-day holding period used only by multi-day research.',
+  'ENTRY MARK UTC':'Requested entry clock. The historical proxy is the last completed intraday close before this mark.',
+  'EXPIRY MARK UTC':'Requested same-day expiry clock. Friday 0DTE is fixed to 08:00 UTC.',
+  'EVALUATION LOOKBACK':'How much recent history is scored. Less history is more current but produces fewer observations and wider uncertainty.',
+  'REGIME FILTER':'Keeps only entries matching a pre-entry volatility, trend, momentum, or drawdown state.',
+  'STRIKE RANGE METHOD':'Manual uses your distances; equal-tail balances uncovered tails; minimum-width finds the narrowest zero-spanning empirical interval.',
+  'TARGET CONTAINMENT':'Requested sample coverage for an automatically estimated empirical range.',
+  'AUTO RANGE SAMPLE':'The currently filtered evaluation sample used to estimate an automatic range.',
+  'PUT STRIKE DISTANCE':'Percentage below the entry anchor for the short put. This is a strike distance, not a premium-adjusted breakeven.',
+  'CALL STRIKE DISTANCE':'Percentage above the entry anchor for the short call. This is a strike distance, not a premium-adjusted breakeven.',
+  'WALK-FORWARD TRAINING WINDOW':'Prior completed history available to each simulated range decision.',
+  'WALK-FORWARD MODEL':'Empirical interval method used inside the no-lookahead walk-forward test.',
+  'WF TARGET':'Requested containment for every walk-forward training estimate.',
+  'BOOTSTRAP':'Resampling design for the containment interval. Moving blocks preserve short local sequences; IID does not.',
+  'BLOCK LENGTH':'Number of adjacent observations copied together by the moving-block bootstrap.',
+  'CHRONOLOGICAL HOLDOUT':'Latest fraction reserved as a later unseen period while the earlier portion estimates the range.',
+  'SHARED HYPOTHETICAL NET CREDIT (% OF SPOT)':'Assumed total option credit as a percentage of entry BTC. The same made-up credit is repeated across history.',
+  'HYPOTHETICAL PUT CREDIT (% OF SPOT)':'Assumed cash-secured-put credit as a percentage of entry BTC. It is not an observed historical quote.',
+  'CAPITAL STRUCTURE':'Fully backed uses one BTC plus put cash; defined risk adds protective wings; CSP writes only a cash-secured put.',
+  'PROTECTIVE WING WIDTH (% OF SPOT)':'Distance from each short strike to its long protective option in defined-risk mode.',
+  'MODEL IV ANNUALIZED':'Manual annualized implied volatility used only for theoretical move and Greeks, not historical containment.',
+  'RISK-FREE RATE':'Annualized rate used in the Black–Scholes snapshot.',
+  'EXPIRY CONTAINMENT':'Fraction of matching sessions finishing between the selected boundaries. It is not automatically an option win rate.',
+  'NO-TOUCH PROXY':'Fraction whose measured path never closes outside the range. Hourly data can miss moves between observations.',
+  'TOUCHED + RECOVERED':'Fraction that left the range on the measured path but returned inside by expiry.',
+  'LOWER / UPPER BREACH':'Share expiring below the put-side boundary versus above the call-side boundary.',
+  'EFFECTIVE N':'Raw count discounted for lag-1 dependence in the inside/outside sequence; a rough information-size diagnostic.',
+  'HORIZON Σ':'Sample standard deviation of entry-to-expiry percentage returns for matching sessions.',
+  'SESSION':'Active timing rule or current session state, depending on the panel.',
+  'HOLD':'Elapsed time from entry mark to expiry mark.',
+  'OBSERVATIONS':'Number of historical sessions matching the active timing, lookback, and regime rules.',
+  'SESSION Σ':'Non-annualized standard deviation of matching entry-to-expiry percentage returns.',
+  '5TH / 95TH':'Empirical lower and upper return percentiles; 90% of observations lie between them.',
+  '1ST / 99TH':'Empirical extreme-tail percentiles; still sample-dependent and not hard loss limits.',
+  '80% EQUAL-TAIL':'Empirical interval leaving roughly 10% of observations in each tail.',
+  '80% MIN-WIDTH':'Narrowest zero-spanning empirical interval containing about 80% of observations.',
+  'MODEL IV MOVE':'Manual IV multiplied by the square root of the session year-fraction; a one-standard-deviation convention.',
+  'SELECTED PUT':'Dollar put strike derived from the anchor BTC and lower percentage distance.',
+  'SELECTED CALL':'Dollar call strike derived from the anchor BTC and upper percentage distance.',
+  'ENTRY PROXY':'Historical price observation used immediately before the requested entry mark.',
+  'EXPIRY PROXY':'Historical price observation used immediately before the requested expiry mark.',
+  'PROXY-SENSITIVE':'Share of expiries within 0.25 percentage points of a boundary, where the hourly settlement proxy could matter most.',
+  'LIVE BTC':'Current public BTCUSDT reference; falls back to the latest repository price when stale or unavailable.',
+  'PRICE AGE':'Time since the last successful live market update.',
+  'ANCHOR BTC':'Reference price used to convert percentage distances into fixed dollar strikes.',
+  'MOVE FROM ANCHOR':'Current BTC percentage change from the session entry anchor or pre-entry preview anchor.',
+  'PUT STRIKE':'Fixed dollar strike for the modeled short put.',
+  'CALL STRIKE':'Fixed dollar strike for the modeled short call; absent in CSP mode.',
+  'RANGE STATUS':'Whether current BTC is between the selected short strikes.',
+  'TIME TO EXPIRY':'Countdown from now to the active session expiry mark.',
+  'TIME TO ENTRY':'Countdown from now to the next modeled session entry.',
+  'IV REMAINING MOVE':'Manual IV scaled by the square root of remaining time; not a guaranteed forecast interval.',
+  'MEAN':'Arithmetic average; sensitive to extreme observations.',
+  'MEDIAN':'Middle observation after sorting; less sensitive to extreme tails than the mean.',
+  'STD. DEV.':'Sample standard deviation of matching expiry returns.',
+  'SKEWNESS':'Standardized asymmetry. Negative indicates a longer/heavier downside tail; positive indicates upside asymmetry.',
+  'EXCESS KURTOSIS':'Tail weight and peakedness relative to normal, whose excess kurtosis is zero.',
+  'JARQUE-BERA':'Normality diagnostic built from sample skewness and kurtosis.',
+  'JB P-VALUE':'Small values argue against a normal distribution; serial dependence can make this textbook p-value optimistic.',
+  'NORMAL INSIDE':'Containment predicted by a fitted normal distribution with the sample mean and standard deviation.',
+  'EMP − NORMAL':'Observed empirical containment minus fitted-normal containment, in percentage points.',
+  'WILSON 95% CI':'Binomial confidence interval for terminal containment with better small-sample behavior than a simple normal interval.',
+  'BOOTSTRAP 95% CI':'Containment interval from 5,000 deterministic IID or moving-block resamples.',
+  '±2Σ TAIL MULT.':'Observed beyond-two-standard-deviation frequency divided by the normal benchmark of about 4.55%.',
+  'RET ACF(1)':'Lag-1 autocorrelation of signed returns; measures short-lag directional dependence.',
+  '|RET| ACF(1)':'Lag-1 autocorrelation of absolute returns; a volatility-clustering diagnostic.',
+  'RET² ACF(1)':'Lag-1 autocorrelation of squared returns; another volatility-clustering diagnostic.',
+  'MIN / MAX':'Smallest and largest entry-to-expiry returns observed in the current sample.',
+  'MEAN LOWER EXCESS':'Average percentage-point distance below the put boundary among lower-breach expiries only.',
+  'WORST LOWER EXCESS':'Largest observed percentage-point distance below the put boundary.',
+  'MEAN UPPER EXCESS':'Average percentage-point distance above the call boundary among upper-breach expiries only.',
+  'WORST UPPER EXCESS':'Largest observed percentage-point distance above the call boundary.',
+  'UNDERLYING WORST-5% MEAN':'Average BTC return in the worst 5% of sessions; this is not the option structure’s expected shortfall.',
+  'UNDERLYING BEST-5% MEAN':'Average BTC return in the best 5% of sessions.',
+  'MEDIAN FIRST TOUCH':'Typical elapsed time until the first measured close outside either boundary, among touched cases.',
+  'PUT TOUCHED FIRST':'Fraction of all sessions whose first measured outside close crossed the put-side boundary.',
+  'CALL TOUCHED FIRST':'Fraction of all sessions whose first measured outside close crossed the call-side boundary.',
+  'MEDIAN PATH LOW':'Median of each session’s worst measured downside excursion from entry.',
+  'MEDIAN PATH HIGH':'Median of each session’s greatest measured upside excursion from entry.',
+  'STRUCTURE':'Selected backing design used for scenario payoff, capital, and Greeks.',
+  'DECLARED CAPITAL':'App-defined capital denominator for one BTC notional; not a broker margin quote.',
+  'NO-CLAIM CORRIDOR':'Expiry prices where terminal intrinsic liability on the modeled short-option layer is zero.',
+  'OPTION-LAYER BE':'Premium-adjusted breakeven boundary for the modeled short-option layer.',
+  'NO-CLAIM RATE':'Fraction of historical expiries with zero terminal intrinsic claim.',
+  'OPTION PROFIT RATE':'Fraction where hypothetical credit exceeds terminal net option claim.',
+  'BACKED PROFIT RATE':'Fraction where total scenario P&L, including selected backing legs, is non-negative.',
+  'AVG OPTION SURPLUS':'Mean hypothetical credit-minus-claim divided by declared capital.',
+  'AVG BACKED RETURN':'Mean combined scenario P&L divided by declared capital.',
+  'CLAIM RAW 2ND MOMENT':'Average squared claim-to-capital ratio; penalizes large liabilities but is not VaR, CVaR, or default probability.',
+  'WORST-5% BACKED':'Mean of the worst 5% of modeled backed returns under the repeated hypothetical credit.',
+  'MAX CAPITAL LOSS':'Largest modeled backed loss divided by declared capital.',
+  'CAPITAL EXCEEDANCES':'Count of scenarios where modeled backed loss exceeds declared capital; not a liquidation simulation.',
+  'TRADES':'Number of valid no-lookahead walk-forward observations.',
+  'TARGET':'Requested empirical containment used when estimating each range.',
+  'OBSERVED':'Containment actually achieved on the later walk-forward observations.',
+  'CAL ERROR':'Observed minus target walk-forward containment, in percentage points.',
+  'NO-TOUCH':'Walk-forward range’s measured path-containment rate.',
+  'AVG RANGE':'Average lower and upper boundaries produced through the walk-forward test.',
+  'RV7':'Annualized realized volatility estimated from the latest 7 daily log returns.',
+  'RV14':'Annualized realized volatility estimated from the latest 14 daily log returns.',
+  'RV30':'Annualized realized volatility estimated from the latest 30 daily log returns.',
+  'RV90':'Annualized realized volatility estimated from the latest 90 daily log returns.',
+  'RV30 PCTL':'Percentile rank of current RV30 within full available RV30 history.',
+  'VOL-OF-VOL':'Standard deviation of RV30 over the latest 90 days.',
+  'TERM SHAPE':'Compares RV7 with RV90: inverted when short-window realized volatility is higher, upward otherwise.',
+  'CURRENT REGIME':'Low, middle, or high tercile of current RV30’s full-history percentile.',
+  'HOLDOUT SPLIT':'Counts in the earlier training block and latest reserved block.',
+  'TRAIN-DERIVED RANGE':'Range estimated from the earlier period only before scoring the holdout.',
+  'TRAIN CONTAINMENT':'In-sample coverage of the earlier training period.',
+  'HOLDOUT CONTAINMENT':'Coverage achieved in the later unseen period.',
+  'HOLDOUT CAL. ERROR':'Holdout containment minus the requested target, in percentage points.',
+  'BREACH EVENTS':'Number of Friday 0DTE expiries outside the selected boundaries.',
+  'WORST |MOVE|':'Largest absolute Friday 00:00→08:00 return in the filtered sample.',
+  'TOP 1 TAIL SHARE':'Share of total boundary excess caused by the single largest breach.',
+  'TOP 3 TAIL SHARE':'Share of total boundary excess caused by the three largest breaches.',
+  'TOP 5 TAIL SHARE':'Share of total boundary excess caused by the five largest breaches.',
+  'FRIDAY CONTAINMENT EDGE':'Friday containment minus all-other-weekday containment for the same 00:00→08:00 rule.',
+  'FRIDAY |MOVE| EDGE':'Friday median absolute move minus the all-other-weekday median.',
+  'ROBUSTNESS SPAN':'Highest minus lowest containment across nearby entry-time and range-width settings.',
+  'NET Δ':'Net model delta after including the short options and the selected backing legs.',
+  'NET Γ':'Net model gamma; short options generally contribute negative gamma and long wings positive gamma.',
+  'NET Θ / DAY':'Approximate one-day model time decay of the combined structure, all else equal.',
+  'NET VEGA / 1 VOL':'Approximate dollar change for a one-volatility-point increase in IV.',
+  'SHORT PUT STRIKE':'Dollar strike of the modeled short put.',
+  'SHORT CALL STRIKE':'Dollar strike of the modeled short call; not written in CSP mode.',
+  'SHARED CREDIT':'Dollar hypothetical net credit per one BTC short notional.',
+  'STRUCTURE BREAKEVEN':'Expiry price or interval where combined modeled structure P&L equals zero.',
+  'ENTRY':'Historical session entry date.',
+  'ENTRY BTC':'BTC price observation used as the historical entry anchor.',
+  'EXPIRY':'Historical session expiry date.',
+  'RETURN':'BTC percentage change from entry observation to expiry observation.',
+  'LOW / HIGH':'Dollar lower and upper boundaries derived from entry BTC.',
+  'PATH MIN / MAX':'Worst and best measured percentage excursions between entry and expiry.',
+  'FIRST TOUCH':'First measured boundary crossed and elapsed time until that close.',
+  'BREACH':'Terminal boundary side and excess distance beyond it.',
+  'RESULT':'IN or OUT at expiry; RECOVERED means the path previously left the range.',
+  'OPTION P&L':'Hypothetical credit minus terminal option claim for one BTC notional.',
+  'BACKED RETURN':'Combined scenario P&L divided by declared capital.'
+};
+const helpKey=text=>String(text||'').replace(/\s+/g,' ').trim().toUpperCase().replace(/^\d+[A-Z]?\s*\/\s*/,'').replace(/\s*\?$/,'').replace(/Σ/g,'Σ');
+function helpFor(key){if(HELP_TEXT[key])return HELP_TEXT[key];if(/^\+?\d+(?:\.\d+)?%$/.test(key))return'Candidate call-side or symmetric percentage boundary used by this comparison grid.';if(/^−?-?\d+(?:\.\d+)?%$/.test(key))return'Candidate put-side or symmetric percentage boundary used by this comparison grid.';return'';}
+function installContextHelp(root=$('researchView')){
+  if(!root)return;const selector='.panel-title,.field label,.kpi .lab,.metric .m-label,.stat .slabel,.greek .gname,.summary-strip .l,.data-table thead th,.heat th,.report-meta-item .label';
+  root.querySelectorAll(selector).forEach(el=>{const help=helpFor(helpKey(el.textContent));if(help){el.dataset.help=help;el.classList.add('has-help');if(!el.hasAttribute('tabindex'))el.tabIndex=0;}else if(el.dataset.help){delete el.dataset.help;el.classList.remove('has-help');el.removeAttribute('tabindex');}});
+}
+let activeHelpTarget=null;
+function positionHelp(target){const tip=$('contextHelpTooltip');if(!tip||tip.hidden||!target)return;tip.style.visibility='hidden';tip.style.left='8px';tip.style.top='8px';const r=target.getBoundingClientRect(),tr=tip.getBoundingClientRect(),gap=9;let left=r.left+r.width/2-tr.width/2;left=clamp(left,8,window.innerWidth-tr.width-8);let top=r.bottom+gap;if(top+tr.height>window.innerHeight-8)top=r.top-tr.height-gap;top=clamp(top,8,window.innerHeight-tr.height-8);tip.style.left=left+'px';tip.style.top=top+'px';tip.style.visibility='visible';}
+function showHelp(target){const tip=$('contextHelpTooltip');if(!tip||!target?.dataset.help)return;activeHelpTarget=target;tip.textContent=target.dataset.help;tip.hidden=false;target.setAttribute('aria-describedby','contextHelpTooltip');positionHelp(target);}
+function hideHelp(){const tip=$('contextHelpTooltip');if(activeHelpTarget)activeHelpTarget.removeAttribute('aria-describedby');activeHelpTarget=null;if(tip)tip.hidden=true;}
+function switchView(name,updateHash=true,resetScroll=true){
+  const valid=name==='index'?'index':'research';document.querySelectorAll('[data-view]').forEach(btn=>{const active=btn.dataset.view===valid;btn.classList.toggle('active',active);btn.setAttribute('aria-selected',String(active));btn.tabIndex=active?0:-1;});
+  $('researchView').hidden=valid!=='research';$('indexView').hidden=valid!=='index';if(updateHash)history.replaceState(null,'',valid==='index'?'#index':'#research');if(resetScroll)window.scrollTo({top:0,behavior:'auto'});if(valid==='research'&&state.daily.length)requestAnimationFrame(()=>renderAll(settings()));
+}
+function panelFromSection(code){return[...document.querySelectorAll('#researchView .panel-title')].find(el=>el.textContent.trim().startsWith(code+' /'))?.closest('.panel')||null;}
+function filterIndex(){
+  const q=$('indexSearch').value.trim().toLowerCase(),items=[...document.querySelectorAll('#indexView [data-index-item]')];let shown=0;items.forEach(el=>{const hit=!q||el.textContent.toLowerCase().includes(q);el.hidden=!hit;if(hit)shown++;});
+  document.querySelectorAll('#indexView [data-index-group]').forEach(group=>{const hits=group.querySelectorAll('[data-index-item]:not([hidden])').length;group.hidden=!!q&&!hits;const details=group.querySelector('.index-details');if(details&&q&&hits)details.open=true;});$('indexEmpty').hidden=shown>0;$('indexSearchCount').textContent=q?`${shown} MATCH${shown===1?'':'ES'} / ${items.length}`:`${items.length} INDEX ENTRIES`;
+}
+function initGuide(){
+  document.querySelectorAll('[data-view]').forEach(btn=>{btn.addEventListener('click',()=>switchView(btn.dataset.view));btn.addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight'].includes(e.key))return;e.preventDefault();const other=btn.dataset.view==='research'?'index':'research';switchView(other);$(other+'Tab').focus();});});
+  document.addEventListener('click',e=>{const jump=e.target.closest('[data-jump-id],[data-jump-section]');if(!jump)return;const target=jump.dataset.jumpId?$(jump.dataset.jumpId):panelFromSection(jump.dataset.jumpSection);if(!target)return;switchView('research',true,false);requestAnimationFrame(()=>{target.scrollIntoView({behavior:'smooth',block:'start'});target.classList.remove('jump-flash');void target.offsetWidth;target.classList.add('jump-flash');setTimeout(()=>target.classList.remove('jump-flash'),1300);});});
+  $('indexSearch').addEventListener('input',filterIndex);$('indexSearch').addEventListener('keydown',e=>{if(e.key==='Escape'){$('indexSearch').value='';filterIndex();$('indexSearch').blur();}});filterIndex();
+  document.addEventListener('pointerover',e=>{const target=e.target.closest('[data-help]');if(target)showHelp(target);});document.addEventListener('pointerout',e=>{const target=e.target.closest('[data-help]');if(target&&!target.contains(e.relatedTarget))hideHelp();});document.addEventListener('focusin',e=>{const target=e.target.closest?.('[data-help]');if(target)showHelp(target);});document.addEventListener('focusout',e=>{if(e.target.closest?.('[data-help]'))hideHelp();});document.addEventListener('pointerdown',e=>{const target=e.target.closest?.('[data-help]');if(target){if(e.pointerType==='touch')activeHelpTarget===target?hideHelp():showHelp(target);}else hideHelp();});document.addEventListener('keydown',e=>{if(e.key==='Escape')hideHelp();});window.addEventListener('scroll',hideHelp,{passive:true});
+  const observer=new MutationObserver(()=>queueMicrotask(()=>installContextHelp()));observer.observe($('researchView'),{childList:true,subtree:true});installContextHelp();switchView(location.hash==='#index'?'index':'research',false,false);window.addEventListener('hashchange',()=>switchView(location.hash==='#index'?'index':'research',false));
+}
 const fmtUSD=x=>Number.isFinite(x)?(x<0?'-$':'$')+Math.round(Math.abs(x)).toLocaleString('en-US'):'—';
 const fmtPct=(x,d=2)=>Number.isFinite(x)?(x>=0?'+':'')+x.toFixed(d)+'%':'—';
 const fmtRate=(x,d=1)=>Number.isFinite(x)?(x*100).toFixed(d)+'%':'—';
@@ -607,7 +1027,7 @@ async function setFriday0DteDefaults(){ $('researchMode').value='friday0dte';$('
 function syncControls(){const mode=$('researchMode').value,isStraddle=$('strategy').value==='straddle',isMulti=mode==='multi',isFriday=mode==='friday0dte',isWeekend=mode==='weekend',capitalMode=$('capitalMode').value,isDefined=capitalMode==='defined';if(isFriday){$('weekday').value='5';$('expiryHour').value='8';if(+$('entryHour').value>=8)$('entryHour').value='0';}if(isWeekend){$('weekday').value='5';$('entryHour').value='16';$('expiryHour').value='8';}if(mode==='intraday'&&+$('entryHour').value>=+$('expiryHour').value)$('entryHour').value='0';$('weekday').disabled=isFriday||isWeekend;$('entryHour').disabled=isWeekend;$('expiryHour').disabled=isFriday||isWeekend;$('legacyExpiryField').style.display=isMulti?'grid':'none';$('sessionControls').style.display=isMulti?'none':'block';$('strangleBox').style.display=isStraddle?'none':'block';$('straddleBox').style.display=isStraddle?'block':'none';$('rangeMethodField').style.display=isStraddle?'none':'grid';$('autoRangeControls').style.display=!isStraddle&&$('rangeMethod').value!=='manual'?'grid':'none';$('wingWidthField').style.display=isDefined?'grid':'none';$('creditLabel').textContent=capitalMode==='csp'?'Hypothetical put credit (% of spot)':'Shared hypothetical net credit (% of spot)';const eh=+$('entryHour').value,xh=+$('expiryHour').value;if(isWeekend){$('sessionNote').innerHTML='<b>Weekend benchmark proxy:</b> Friday 16:00 → Sunday 08:00 UTC (~40h), matching the timing used in the Deribit Insights weekend-vol study. Price-only: no historical option delta/premium/P&L is inferred.';}else{$('sessionNote').innerHTML=`<b>${isFriday?'Friday 0DTE':'Intraday'} proxy:</b> ${String(eh).padStart(2,'0')}:00 → ${String(xh).padStart(2,'0')}:00 UTC (${Math.max(0,xh-eh)}h). Prices use the last completed hourly close before each mark; actual Deribit 08:00 delivery uses a 07:30–08:00 TWAP.`;}}
 const changeIds=['researchMode','strategy','weekday','expiry','entryHour','expiryHour','lookback','regime','rangeMethod','targetCoverage','lowerPct','upperPct','trainWeeks','wfMethod','wfTarget','bootstrapMode','blockLen','holdoutPct','creditPct','capitalMode','wingPct','ivPct','rfPct','distView','heatMetric'];
 changeIds.forEach(id=>$(id).addEventListener('change',async()=>{syncControls();state.live.entryPrice=NaN;state.live.entryTs=NaN;await fetchEntryPrice(settings());run();}));$('runBtn').addEventListener('click',run);$('defaultBtn').addEventListener('click',setFriday0DteDefaults);$('themeBtn').addEventListener('click',()=>{const root=document.documentElement;root.dataset.theme=root.dataset.theme==='light'?'dark':'light';renderAll(settings());});document.querySelectorAll('[data-report-mode]').forEach(btn=>btn.addEventListener('click',()=>{state.reportMode=btn.dataset.reportMode;state.daily.length&&renderReport(settings());}));
-let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>state.daily.length&&renderAll(settings()),120);});syncControls();loadData().then(()=>fetchEntryPrice(settings()));fetchLiveREST();connectLivePrice();setInterval(()=>{if(!Number.isFinite(state.live.price)||Date.now()-state.live.ts>30000)fetchLiveREST();if(state.daily.length)renderLivePanel(settings());},10000);
+let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>state.daily.length&&renderAll(settings()),120);});initGuide();syncControls();loadData().then(()=>fetchEntryPrice(settings()));fetchLiveREST();connectLivePrice();setInterval(()=>{if(!Number.isFinite(state.live.price)||Date.now()-state.live.ts>30000)fetchLiveREST();if(state.daily.length)renderLivePanel(settings());},10000);
 })();
 </script>
 </body>
