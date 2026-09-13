@@ -274,6 +274,15 @@ button,input,select{font:inherit;color:inherit}button{cursor:pointer}.app{min-he
     </div>
   </section>
 
+  <section class="panel" id="experimentNotebook">
+    <div class="panel-head"><span class="panel-title">RESEARCH NOTEBOOK</span><span class="tiny">SAVED EXPLORER EXPERIMENTS</span></div>
+    <div class="panel-body"><div class="row2"><div class="field"><label for="experimentName">Experiment name</label><input class="ctrl" id="experimentName" maxlength="80" placeholder="Friday 0DTE · wider put"></div><div class="field"><label>Snapshot current explorer</label><button class="btn" id="saveExperiment">Save experiment</button></div></div>
+    <div class="model-note" id="experimentStatus" role="status" aria-live="polite">Save targets, settings, sample dates and validation results before trying another setup. Up to 12 snapshots are kept in this browser. Clearing browser data removes them.</div>
+    <div class="table-wrap" style="margin-top:10px"><table class="data-table"><thead><tr><th>EXPERIMENT / SAVED UTC</th><th>SESSION / STRUCTURE</th><th>SAMPLE UTC / N</th><th>TARGET</th><th>PUT / CALL</th><th>HOLDOUT</th><th>WALK-FORWARD</th><th>WORST EXCESS</th><th>ACTIONS</th></tr></thead><tbody id="experimentBody"></tbody></table></div>
+    <p class="tiny">Saved results are frozen; Restore settings recalculates against currently loaded data. Compare matching sessions, sample dates and sample IDs. A matching ID helps detect changes but is not a cryptographic integrity proof. Looking repeatedly at holdout results adds selection bias. Results measure BTC price behavior, not option profitability.</p>
+    <details class="index-details"><summary>DESIGN REFERENCE</summary><div class="panel-body tiny">Independent browser implementation inspired by <a href="https://github.com/OpenByteInc/QuantDinger" target="_blank" rel="noopener">QuantDinger</a>'s experiment workflows and <a href="https://github.com/OpenByteInc/QuantDinger/blob/main/backend_api_python/app/services/backtest_cache.py" target="_blank" rel="noopener">bounded backtest caching</a>. No QuantDinger source, frontend assets, services or trading integration are bundled.</div></details></div>
+  </section>
+
   <section class="panel" id="researchReportPanel">
     <div class="panel-head">
       <div class="flexhead"><span class="panel-title">21 / RESEARCH REPORT</span><span class="tiny" id="reportSync">AUTO-SYNCED TO CURRENT CONTROLS</span></div>
@@ -1012,11 +1021,48 @@ function explorerStudy(base,hp,max,step,csp){
   }
   return{train,test,rows};
 }
+// Independent implementation inspired by QuantDinger experiment workflows and bounded caching.
+const explorerCache=new Map(),experimentKey='btc-vol-lab-experiments-v1';
+let latestExplorerExperiment=null;
+function explorerDataKey(base){return JSON.stringify(base.map(x=>[x.entryTs,x.expiryTs,x.entry,x.expiry,x.ret,x.pathMinRet,x.pathMaxRet]));}
+function sampleId(text){let h=2166136261;for(let i=0;i<text.length;i++){h^=text.charCodeAt(i);h=Math.imul(h,16777619);}return(h>>>0).toString(16).padStart(8,'0');}
+function cachedExplorerStudy(base,hp,max,step,csp){
+  const dataKey=explorerDataKey(base),key=JSON.stringify([dataKey,hp,max,step,csp]);
+  if(explorerCache.has(key))return{study:explorerCache.get(key),id:sampleId(dataKey),cached:true};
+  const study=explorerStudy(base,hp,max,step,csp);
+  if(explorerCache.size>=4)explorerCache.delete(explorerCache.keys().next().value);
+  explorerCache.set(key,study);return{study,id:sampleId(dataKey),cached:false};
+}
+function notebookEscape(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function readExperiments(){
+  try{const a=JSON.parse(localStorage.getItem(experimentKey)||'[]');return Array.isArray(a)?a.filter(x=>x&&x.version===1&&Array.isArray(x.rows)&&x.settings&&x.controls&&typeof x.saved==='string').slice(0,12):[];}catch(_){return[];}
+}
+function writeExperiments(a){try{localStorage.setItem(experimentKey,JSON.stringify(a));return true;}catch(_){$('experimentStatus').textContent='Could not save: browser storage is unavailable or full. Existing snapshots have not been intentionally removed.';return false;}}
+function captureExperiment(s,study,id){
+  const controls={};for(const key of [...changeIds,'explorerMax','explorerStep'])controls[key]=$(key).value;
+  return JSON.parse(JSON.stringify({version:1,engine:'range-explorer-v1',settings:s,controls,id,rows:study.rows,trainN:study.train.length,testN:study.test.length,first:state.baseEval[0]?.entryTs,last:state.baseEval.at(-1)?.entryTs}));
+}
+function renderExperiments(){
+  const items=readExperiments();$('experimentBody').innerHTML=items.map((x,i)=>{
+    const esc=notebookEscape;return x.rows.map((r,j)=>`<tr><td>${esc(x.name)}<br><span class="tiny">${esc(x.saved)} · ${esc(x.id)}</span></td><td>${esc(x.settings.mode)} · ${x.settings.mode==='multi'?esc(x.settings.expiry)+' days':x.settings.mode==='weekend'?'Fri 16:00 → Sun 08:00 UTC':esc(x.settings.entryHour)+':00 → '+esc(x.settings.expiryHour)+':00 UTC'}<br>${esc(x.settings.capitalMode)}</td><td>${Number.isFinite(x.first)?date(x.first):'—'} → ${Number.isFinite(x.last)?date(x.last):'—'}<br>${esc(x.trainN)} train / ${esc(x.testN)} test</td><td>${fmtRate(r.target)}</td><td>${r.pick?'−'+Number(r.pick.p).toFixed(2)+'% / '+(r.pick.c===null?'NOT WRITTEN':'+'+Number(r.pick.c).toFixed(2)+'%'):'No range'}</td><td>${fmtRate(r.hold?.rate)}</td><td>${fmtRate(r.wfN?r.wfWins/r.wfN:NaN)} · N=${esc(r.wfN)}</td><td>${Number.isFinite(r.hold?.worst)?r.hold.worst.toFixed(3)+' pp':'—'}</td><td>${j===0?`<button class="iconbtn" data-restore-experiment="${i}">Restore settings</button> <button class="iconbtn" data-delete-experiment="${i}">Delete</button>`:''}</td></tr>`).join('');
+  }).join('')||'<tr><td colspan="9">No saved experiments yet.</td></tr>';
+  $('experimentBody').querySelectorAll('[data-delete-experiment]').forEach(b=>b.addEventListener('click',()=>{const next=[...items];next.splice(+b.dataset.deleteExperiment,1);if(writeExperiments(next)){$('experimentStatus').textContent='Experiment deleted.';renderExperiments();}}));
+  $('experimentBody').querySelectorAll('[data-restore-experiment]').forEach(b=>b.addEventListener('click',()=>{const x=items[+b.dataset.restoreExperiment];for(const key of [...changeIds,'explorerMax','explorerStep'])if(typeof x.controls[key]==='string')$(key).value=x.controls[key];syncControls();state.live.entryPrice=NaN;state.live.entryTs=NaN;run();$('experimentStatus').textContent='Settings restored and results recalculated on current data. Saved snapshot remains unchanged.';}));
+}
+function initExperiments(){
+  renderExperiments();$('saveExperiment').addEventListener('click',()=>{
+    if(!latestExplorerExperiment?.rows.length){$('experimentStatus').textContent='Run an explorer setup with at least 30 training and 10 holdout sessions first.';return;}
+    const items=readExperiments();if(items.length>=12){$('experimentStatus').textContent='12 experiments saved. Delete one before saving another.';return;}
+    const x=JSON.parse(JSON.stringify(latestExplorerExperiment));x.name=$('experimentName').value.trim().slice(0,80)||`Experiment ${items.length+1}`;x.saved=new Date().toISOString();
+    if(writeExperiments([x,...items])){renderExperiments();$('experimentStatus').textContent='Experiment saved in this browser. Its results will stay frozen as you change settings.';}
+  });
+}
 function renderExplorer(s){
   const max=clamp(Number($('explorerMax').value)||10,1,50),requested=Number($('explorerStep').value)||.5;
   // Bound UI work to at most 40 distances per side on large historical datasets.
-  const step=Math.max(requested,max/40),study=explorerStudy(state.baseEval,s.holdoutPct,max,step,s.capitalMode==='csp');
-  $('explorerNote').textContent=`${study.train.length} earlier training sessions (overlap purged) / ${study.test.length} latest holdout sessions. Grid step ${step.toFixed(3)}%, maximum ${max.toFixed(1)}% per side. ${study.rows.length?'Holdout never chooses the displayed fixed range.':'Need at least 30 training and 10 holdout sessions; widen lookback or filters.'} ${s.strategy==='straddle'?'Explorer tests alternative strangle strikes; applying a row switches strategy.':''}`;
+  const step=Math.max(requested,max/40),result=cachedExplorerStudy(state.baseEval,s.holdoutPct,max,step,s.capitalMode==='csp'),study=result.study;
+  latestExplorerExperiment=captureExperiment(s,study,result.id);
+  $('explorerNote').textContent=`${study.train.length} earlier training sessions (overlap purged) / ${study.test.length} latest holdout sessions. Sample ID ${result.id} · ${result.cached?'cached evaluation':'new evaluation'}. Grid step ${step.toFixed(3)}%, maximum ${max.toFixed(1)}% per side. ${study.rows.length?'Holdout never chooses the displayed fixed range.':'Need at least 30 training and 10 holdout sessions; widen lookback or filters.'} ${s.strategy==='straddle'?'Explorer tests alternative strangle strikes; applying a row switches strategy.':''}`;
   $('explorerBody').innerHTML=study.rows.map((row,i)=>{const p=row.pick,h=row.hold;if(!p)return `<tr><td>${fmtRate(row.target)}</td><td colspan="9">No training range meets target within this grid. Expand maximum distance.</td></tr>`;
     return `<tr><td>${fmtRate(row.target)}</td><td>−${p.p.toFixed(2)}% / ${p.c===null?'NOT WRITTEN':'+'+p.c.toFixed(2)+'%'}</td><td>${fmtRate(p.m.rate)}</td><td>${fmtRate(h.rate)} (N=${h.n})</td><td>${fmtRate(h.noTouch)}</td><td>${h.puts} / ${h.calls}</td><td>${h.mean.toFixed(3)} / ${h.worst.toFixed(3)} pp</td><td>${h.mean.toFixed(3)}%</td><td>${fmtRate(row.wfN?row.wfWins/row.wfN:NaN)} (N=${row.wfN}; skipped ${row.wfSkipped})</td><td><button class="iconbtn" data-explorer-row="${i}">Apply range</button></td></tr>`;}).join('');
   $('explorerBody').querySelectorAll('[data-explorer-row]').forEach(b=>b.addEventListener('click',()=>{const p=study.rows[+b.dataset.explorerRow].pick;$('strategy').value='strangle';$('rangeMethod').value='manual';$('lowerPct').value=-p.p;if(p.c!==null)$('upperPct').value=p.c;syncControls();run();}));
@@ -1108,9 +1154,10 @@ function syncControls(){const mode=$('researchMode').value,isStraddle=$('strateg
 ['explorerMax','explorerStep'].forEach(id=>$(id).addEventListener('change',()=>renderExplorer(settings())));
 const changeIds=['researchMode','strategy','weekday','expiry','entryHour','expiryHour','lookback','regime','rangeMethod','targetCoverage','lowerPct','upperPct','trainWeeks','wfMethod','wfTarget','bootstrapMode','blockLen','holdoutPct','creditPct','capitalMode','wingPct','ivPct','rfPct','distView','heatMetric'];
 changeIds.forEach(id=>$(id).addEventListener('change',async()=>{syncControls();state.live.entryPrice=NaN;state.live.entryTs=NaN;await fetchEntryPrice(settings());run();}));$('runBtn').addEventListener('click',run);$('defaultBtn').addEventListener('click',setFriday0DteDefaults);$('themeBtn').addEventListener('click',()=>{const root=document.documentElement;root.dataset.theme=root.dataset.theme==='light'?'dark':'light';renderAll(settings());});document.querySelectorAll('[data-report-mode]').forEach(btn=>btn.addEventListener('click',()=>{state.reportMode=btn.dataset.reportMode;state.daily.length&&renderReport(settings());}));
-let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>state.daily.length&&renderAll(settings()),120);});initGuide();syncControls();loadData().then(()=>fetchEntryPrice(settings()));fetchLiveREST();connectLivePrice();setInterval(()=>{if(!Number.isFinite(state.live.price)||Date.now()-state.live.ts>30000)fetchLiveREST();if(state.daily.length)renderLivePanel(settings());},10000);
+let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>state.daily.length&&renderAll(settings()),120);});initGuide();initExperiments();syncControls();loadData().then(()=>fetchEntryPrice(settings()));fetchLiveREST();connectLivePrice();setInterval(()=>{if(!Number.isFinite(state.live.price)||Date.now()-state.live.ts>30000)fetchLiveREST();if(state.daily.length)renderLivePanel(settings());},10000);
 })();
 </script>
 </body>
 </html>
+
 
