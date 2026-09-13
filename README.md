@@ -179,6 +179,9 @@ For each historical terminal BTC price, the app reports:
 - worst-5% backed mean
 - maximum backed capital loss
 - declared-capital exceedance count
+- non-compounded option and backed P&L sums per one-BTC session
+- mean and median ROI, ROI profit factor, average win/loss ratio, and outcome streaks
+- sequential compounded multiple, scenario CAGR, and close-to-close maximum drawdown when trades do not overlap
 
 The raw second moment is a quadratic claim-burden diagnostic. It is not CVaR, default probability, broker margin, or proof that the hypothetical premium was executable.
 
@@ -384,11 +387,10 @@ It does not know the historical:
 - margin impact
 - liquidation path
 
-Therefore scenario option P&L must not be interpreted as observed historical performance. CAGR, Sharpe, Calmar, profit factor, and historical strategy APR are intentionally not presented as real results.
+Therefore scenario option P&L must not be interpreted as observed historical performance. The displayed profit factor, compounded multiple, CAGR and drawdown are explicitly hypothetical: they reuse one assumed credit, roll 100% of declared capital after each expiry, and omit execution costs and intratrade mark-to-market. CAGR and drawdown are disabled when selected trades overlap. Sharpe, Calmar and historical strategy APR are not presented as real results.
 
 `Expiry containment` means BTC finished inside a selected price range. It does **not** automatically mean the corresponding short option position was profitable.
 
 ## Disclaimer
 
 For research and educational use only. Nothing in this repository is financial advice or a recommendation to trade BTC or options. Even fully backed and defined-risk structures can lose substantial capital.
-
