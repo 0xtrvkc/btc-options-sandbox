@@ -17,6 +17,27 @@ The project is intentionally designed to answer a narrower and more defensible q
 
 It does **not** reconstruct historical option premiums, historical IV, or observed historical option P&L. Scenario P&L is clearly labeled and applies one user-supplied hypothetical credit to every historical session.
 
+## Audited research workflow
+
+See [AUDIT.md](AUDIT.md) for verified findings, fixes, tests, and remaining limitations.
+
+- **Entry desk:** choose a containment target (80%, 85%, 90%, 95%), manual delta targets, or a quote-based return candidate. Selected estimates do not change the applied fixed range until **Apply** is clicked.
+- **Historical data quality:** completed bars only; daily and intraday timestamps are bucket starts. Missing or unaligned session buckets are excluded. The status strip reports coverage, age, and gaps.
+- **Historical delta:** pre-entry 30-day realized volatility by default, or manual IV. These are model estimates. Short-position delta appears first.
+- **Quote comparison:** import normalized USD-linear per-BTC premiums and costs using the schema in the desk. Training ranks policies; a separate validation period must also show positive mean return and pass the specified worst-5% mean loss limit. The latest chronological holdout evaluates selections. Sample minimums: 30 training, 10 validation, 10 holdout.
+- **Return attribution:** quoted results separate option return, BTC holding return, and their combined return on declared capital. They are per-trade returns, not APR. Loss thresholds are user assumptions, not recommended risk budgets.
+- **Research notebook:** snapshots remain local to this browser; imported quotes are in memory only. Restoring settings recalculates against the current loaded data.
+
+Repeated tuning can contaminate any holdout. This app does not claim a permanently untouched final test or an optimal future trade. Price-only and quote-based comparisons may have different sample coverage; quoted candidates use matched sessions with each other.
+
+### Regression checks
+
+```bash
+node tests/audit.test.cjs
+```
+
+The suite uses synthetic fixtures, independent payoff checks, data-cutoff checks and a lightweight DOM/canvas test double. It does not replace real-browser testing. GitHub Actions runs it on pushes and pull requests using Node 24. For manual desktop/mobile inspection, open [tests/layout.html](tests/layout.html) while serving the repository over HTTP.
+
 ## Why this exists
 
 Short-premium strategies can show attractive win rates while hiding unstable regimes and severe tail events. This sandbox focuses on the underlying BTC price process first:
@@ -370,3 +391,4 @@ Therefore scenario option P&L must not be interpreted as observed historical per
 ## Disclaimer
 
 For research and educational use only. Nothing in this repository is financial advice or a recommendation to trade BTC or options. Even fully backed and defined-risk structures can lose substantial capital.
+
