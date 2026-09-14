@@ -521,6 +521,11 @@ button:disabled{opacity:.5;cursor:not-allowed}#themeBtn{min-width:40px;min-heigh
           <article class="term-row" data-index-item><div class="term-name">IMPLIED VOLATILITY (IV)</div><div class="term-def">Market/model volatility input embedded in option prices. Here it is manual and affects only theoretical move and Greeks—not the historical sample.</div></article>
           <article class="term-row" data-index-item><div class="term-name">REALIZED VOLATILITY (RV)</div><div class="term-def">Annualized standard deviation estimated from historical BTC log returns over a stated window such as 7, 30, or 90 days.</div></article>
           <article class="term-row" data-index-item><div class="term-name">MODEL IV / RV</div><div class="term-def">Manual annualized IV divided by annualized realized volatility for the comparable session. It is context, not a complete volatility-risk-premium trade signal.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">HAR-LIKE RV FORECAST</div><div class="term-def">Transparent persistence forecast: 30% of RV5 + 40% of RV20 + 30% of RV60. The weights are fixed rather than fitted, and the current close-only source makes this a context estimate—not historical option IV.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">INPUT IV − RV</div><div class="term-def">Manual model IV minus the HAR-like close-to-close RV forecast, in volatility points. Because the IV is user-entered rather than an observed executable ATM quote, this is scenario context—not measured volatility-risk premium.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">INPUT IV / RV</div><div class="term-def">Manual model IV divided by the HAR-like close-to-close RV forecast. Values above 1 mean the input exceeds forecast RV; they do not prove that sellable volatility is rich after skew, spread, fees, and slippage.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">EXECUTABLE-BID PRICING BASIS</div><div class="term-def">Historical short-option entry premium must be the bid that could have been sold, not a mark or theoretical midpoint. Imported quote files declare <code>pricingBasis: "executable-bid"</code>; costs must include applicable fees and estimated slippage.</div></article>
+          <article class="term-row" data-index-item><div class="term-name">YANG–ZHANG UNAVAILABLE</div><div class="term-def">Yang–Zhang volatility requires open, high, low, and close observations. The current daily source contains closes only, so the app degrades honestly to close-to-close RV instead of inventing missing range data.</div></article>
         </div>
       </details>
     </section>
@@ -571,6 +576,12 @@ const HELP_TEXT={
   'CALIBRATION':'Compares requested walk-forward coverage with the coverage actually observed. Closer to the diagonal means better calibration.',
   'ROLLING STABILITY':'Containment through moving 52-trade windows. Large changes reveal that the full-sample average is time-dependent.',
   'REALIZED VOL REGIME':'Current annualized realized volatility across multiple lookback windows, plus percentile, term shape, and volatility-of-volatility.',
+  'HAR-LIKE RV FORECAST':'Fixed-weight volatility-persistence estimate: 30% RV5 + 40% RV20 + 30% RV60. It uses close-to-close BTC returns and is not historical implied volatility.',
+  'INPUT IV − RV':'Your manual model IV minus the HAR-like close-to-close RV forecast, in volatility points. It is scenario context, not an observed volatility-risk premium.',
+  'INPUT IV / RV':'Your manual model IV divided by the HAR-like RV forecast. Above 1× does not prove an executable short-volatility edge after skew and trading costs.',
+  'IMPORT HISTORICAL PREMIUMS FOR PROFIT COMPARISON':'Loads normalized historical executable entry bids and total costs. Marks, theoretical mids, and quote files without an executable-bid declaration are rejected.',
+  'EXECUTABLE-BID PRICING BASIS':'Premium available at the historical bid for a short-option entry—not the exchange mark or a theoretical midpoint.',
+  'YANG–ZHANG UNAVAILABLE':'Yang–Zhang needs daily open, high, low, and close data. The current source has closes only, so the app uses close-to-close RV.',
   'STRIKE-DISTANCE HEATMAP':'Compares many put/call distances under the selected metric. Click a result cell to apply that manual strangle range.',
   'DAY-OF-WEEK STUDY':'Uses the same horizon and boundaries on every entry weekday to check whether Friday behavior is unusual.',
   'HORIZON × RANGE SURFACE':'Containment across several holding periods and symmetric range widths.',
