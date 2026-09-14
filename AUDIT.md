@@ -36,10 +36,12 @@ This is an engineering/research audit, not a certification of profitability or e
 | UX | Delta magnitude duplicated the same number and the seller sign was secondary. | Short-position / long-option order and explanatory labels. |
 | UX | Small controls, unlabeled fields and wide tables hurt touch/keyboard use. | Associated labels, visible focus, 44px mobile controls, horizontal scroll hints, constrained grid widths and reduced-motion support. |
 | Reliability | Changing settings waited for live network requests; failed data downloads had no timeout. | Research runs independently of entry fetch, source timeouts, and explicit failure status. |
+| High | Imported premiums could be marks or unspecified prices even though return ranking requires executable entry credit. | Require `pricingBasis: "executable-bid"`; reject mark/unspecified quote files and state the full cost requirement. |
+| Research | One trailing RV measure did not express volatility persistence or separate a scenario IV comparison from observed VRP. | Add an auditable 30/40/30 blend of RV5/RV20/RV60, label the manual-IV comparison as scenario-only, and explain why close-only data cannot support Yang–Zhang. |
 
 ## Validation
 
-- `node tests/audit.test.cjs`: 21 regression groups, covering timestamp cutoffs, partial/gapped paths, multi-day tenor, RV causality, minimum-width coverage, delta inversion/parity, independent payoff and sequential-performance accounting, overlap rejection for path metrics, expired tenor, quote units/costs, validation and final-holdout separation, candidate rejection, and rendering all four research modes plus an empty sample.
+- `node tests/audit.test.cjs`: 23 regression groups, covering timestamp cutoffs, partial/gapped paths, multi-day tenor, RV causality, minimum-width coverage, delta inversion/parity, independent payoff and sequential-performance accounting, overlap rejection for path metrics, expired tenor, executable quote-basis enforcement, quote units/costs, validation and final-holdout separation, candidate rejection, volatility-context labeling, and rendering all four research modes plus an empty sample.
 - Real companion daily/4H JSON snapshot: 5,369 completed daily bars and 32,209 completed 4H bars; default Friday study produced 767 complete sessions, with 536 training and 231 holdout observations. Node test-double calculation/render took approximately 1.95 seconds in this environment. This is not a browser/mobile performance benchmark.
 - Published interface inspected in Chrome. Browser QA caught and fixed a protective-wing default/step mismatch that blocked initial calculation, and a Greek-card overflow. Numeric default constraints now have a regression check. Verified initial calculation, automatic-range application, manual-delta application, and no document overflow at desktop width. The responsive harness checks 390/768/1280px frames. Localhost preview is blocked by the managed browser; checks use the published app. Both regression and Pages workflows passed.
 - Actual historical option quotes were not supplied; quote tests use explicitly synthetic fixtures. No synthetic quotes enter the application defaults.
@@ -60,3 +62,4 @@ This is an engineering/research audit, not a certification of profitability or e
 - [Daily source generator](https://github.com/0xtrvkc/dynamic-btc-analytics-dashboard/blob/main/generate_price_json.py)
 - [Intraday source generator](https://github.com/0xtrvkc/dynamic-btc-analytics-dashboard/blob/main/generate_intraday_price_json.py)
 - [Original weekend options study](https://insights.deribit.com/education/option-backtest-selling-weekend-vol/)
+- [Bybit Options-Income Quant-Coach Compendium](https://github.com/seed2004/bybit-quant-coach-compendium)

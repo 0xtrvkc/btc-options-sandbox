@@ -24,7 +24,7 @@ See [AUDIT.md](AUDIT.md) for verified findings, fixes, tests, and remaining limi
 - **Entry desk:** choose a containment target (80%, 85%, 90%, 95%), manual delta targets, or a quote-based return candidate. Selected estimates do not change the applied fixed range until **Apply** is clicked.
 - **Historical data quality:** completed bars only; daily and intraday timestamps are bucket starts. Missing or unaligned session buckets are excluded. The status strip reports coverage, age, and gaps.
 - **Historical delta:** pre-entry 30-day realized volatility by default, or manual IV. These are model estimates. Short-position delta appears first.
-- **Quote comparison:** import normalized USD-linear per-BTC premiums and costs using the schema in the desk. Training ranks policies; a separate validation period must also show positive mean return and pass the specified worst-5% mean loss limit. The latest chronological holdout evaluates selections. Sample minimums: 30 training, 10 validation, 10 holdout.
+- **Quote comparison:** import normalized USD-linear per-BTC executable entry bids and costs using the schema in the desk. The top-level `pricingBasis` must be `executable-bid`; marks and unspecified pricing are rejected. Costs must cover applicable entry and expiry/close fees plus estimated slippage. Training ranks policies; a separate validation period must also show positive mean return and pass the specified worst-5% mean loss limit. The latest chronological holdout evaluates selections. Sample minimums: 30 training, 10 validation, 10 holdout.
 - **Return attribution:** quoted results separate option return, BTC holding return, and their combined return on declared capital. They are per-trade returns, not APR. Loss thresholds are user assumptions, not recommended risk budgets.
 - **Research notebook:** snapshots remain local to this browser; imported quotes are in memory only. Restoring settings recalculates against the current loaded data.
 
@@ -224,7 +224,11 @@ Historical observations can be filtered by market state, including:
 - 30-day momentum
 - drawdown regime
 
-The app also shows realized-volatility term structure and volatility-of-volatility diagnostics.
+The app also shows realized-volatility term structure, volatility-of-volatility diagnostics, and a transparent HAR-like forecast:
+
+`0.30 × RV5 + 0.40 × RV20 + 0.30 × RV60`
+
+The source dataset currently contains closes only, so this is a close-to-close forecast rather than Yang–Zhang. The displayed manual-IV-minus-forecast comparison is scenario context, not an observed volatility-risk premium.
 
 ## Entry-time and day-of-week studies
 
@@ -257,6 +261,10 @@ Reference research:
 
 - [Option Backtest: Selling Weekend Vol](https://insights.deribit.com/education/option-backtest-selling-weekend-vol/)
 - [Option Backtest: Selling Weekend Vol Revisited](https://insights.deribit.com/education/option-backtest-selling-weekend-vol-revisited/)
+
+Additional design and risk reference:
+
+- [Bybit Options-Income Quant-Coach Compendium](https://github.com/seed2004/bybit-quant-coach-compendium) — adapted concepts include executable-price discipline, explicit unit/settlement boundaries, fixed-weight multi-horizon RV context, and honest degradation when required market data is absent. Its naked-strangle material was not imported; this sandbox keeps fully backed, defined-risk, and CSP structures only.
 
 ## Live BTC layer
 
