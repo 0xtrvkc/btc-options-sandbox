@@ -915,7 +915,8 @@ function qualitySummary(a,period){let gaps=0;for(let i=1;i<a.length;i++)gaps+=Ma
 function renderDataQuality(s){
   const d=qualitySummary(state.daily,DAY),x=qualitySummary(state.intraday,(state.intradayHours||1)*HOUR),last=state.intraday.length?x.end:d.end,age=Number.isFinite(last)?Math.max(0,(Date.now()-last)/DAY):NaN;
   $('dataQuality').textContent=`Historical data: ${state.daily.length} completed daily bars; ${state.intraday.length} completed intraday bars (${state.intradayHours||'—'}h). Latest completed mark: ${Number.isFinite(last)?new Date(last).toISOString().slice(0,16)+' UTC':'unavailable'}; ${Number.isFinite(age)?age.toFixed(1):'—'} days old. Detected missing buckets: daily ${d.gaps}, intraday ${x.gaps}. Invalid/conflicting rows removed: ${(state.dailyAudit?.invalid||0)+(state.dailyAudit?.conflicts||0)+(state.intradayAudit?.invalid||0)+(state.intradayAudit?.conflicts||0)}. Sessions with missing or unaligned buckets are excluded. Close-only data cannot prove no intrabar touch. Upstream buckets may themselves contain missing minutes.`;
-  $('researchState').textContent=`CURRENT · ${s.mode} · ${state.records.length} complete sessions · applied range ${fmtPct(state.range.lo,2)} / ${fmtPct(state.range.hi,2)}${s.capitalMode==='csp'?' (upper boundary is an untraded reference)':''}${s.rangeMethod!=='manual'?' · full-sample descriptive range, not out-of-sample':''}`;
+  const appliedSource=s.strategy==='straddle'?'STRADDLE BREAKEVEN':s.rangeMethod==='manual'?'MANUAL FIXED':'FULL-SAMPLE DESCRIPTIVE';
+  $('researchState').textContent=`CURRENT · ${s.mode} · ${state.records.length} complete sessions · APPLIED RANGE ${fmtPct(state.range.lo,2)} / ${fmtPct(state.range.hi,2)} · SOURCE: ${appliedSource}${s.capitalMode==='csp'?' (upper boundary is an untraded reference)':''}${s.rangeMethod!=='manual'?' · not out-of-sample':''}`;
   $('dataQuality').classList.toggle('warningline',!Number.isFinite(age)||age>2||x.gaps>0);
 }
 let entryRefreshKey='';
@@ -1009,14 +1010,17 @@ function entryDeltaPlan(s){
   const kp=entryDeltaStrike(S,T,s.r,s.iv,putTarget,'put'),kc=s.capitalMode==='csp'?NaN:entryDeltaStrike(S,T,s.r,s.iv,callTarget,'call');
   return{S,hours,T,putTarget,callTarget,kp,kc,lo:(kp/S-1)*100,hi:(kc/S-1)*100,valid:kp>0&&kp<S&&(s.capitalMode==='csp'||kc>S)};
 }
+function deskCandidateLabel(){const mode=$('deskSelectionMode').value;return mode==='containment'?'DESK-SELECTED · CONTAINMENT':mode==='profit'?'DESK-SELECTED · RETURN':'MANUAL DELTA TARGETS';}
+function deskRangeApplied(p,s){if(!p.valid)return false;const eps=5e-5,putMatch=Math.abs(state.range.lo-p.lo)<=eps,callMatch=s.capitalMode==='csp'||Math.abs(state.range.hi-p.hi)<=eps;return s.strategy==='strangle'&&s.rangeMethod==='manual'&&putMatch&&callMatch;}
 function renderEntryDelta(s){
   const p=entryDeltaPlan(s),csp=s.capitalMode==='csp',ctx=sessionContext(s),phase=ctx.phase==='UPCOMING'?'PREVIEW':ctx.phase==='EXPIRED'?'EXPIRED SESSION REFERENCE':ctx.phase==='ACTIVE'?'ENTRY ANCHOR':'RESEARCH REFERENCE';
   const put=bsGreeks(p.S,p.kp,p.T,s.r,s.iv,'put').delta,call=bsGreeks(p.S,p.kc,p.T,s.r,s.iv,'call').delta;
   const automatic=$('deskSelectionMode').value!=='manual';$('entryPutDelta').disabled=automatic;$('entryCallDelta').disabled=csp||automatic;
   if(automatic){$('entryPutDelta').value=Number.isFinite(put)?Math.abs(put).toFixed(6):'';$('entryCallDelta').value=Number.isFinite(call)?call.toFixed(6):'';}
-  const cells=[['BTC '+phase,fmtUSD(p.S),'strikes fixed to entry/preview reference'],['ENTRY TENOR',Number.isFinite(p.hours)?p.hours.toFixed(2)+'h / '+(p.hours/24).toFixed(3)+' DTE':'—','full entry-to-expiry duration'],['PUT ENTRY Δ',deltaText(put),'short-put exposure '+deltaText(-put)],['PUT STRIKE',fmtUSD(p.kp),fmtPct(p.lo,2)+' from entry BTC'],['CALL ENTRY Δ',csp?'NOT WRITTEN':deltaText(call),csp?'CSP only':'short-call exposure '+deltaText(-call)],['CALL STRIKE',csp?'NOT WRITTEN':fmtUSD(p.kc),csp?'CSP only':fmtPct(p.hi,2)+' from entry BTC']];
+  const applied=deskRangeApplied(p,s),candidateRange=p.valid?`${fmtPct(p.lo,2)} / ${csp?'NOT WRITTEN':fmtPct(p.hi,2)}`:'—';
+  const cells=[['BTC '+phase,fmtUSD(p.S),'strikes fixed to entry/preview reference'],['ENTRY TENOR',Number.isFinite(p.hours)?p.hours.toFixed(2)+'h / '+(p.hours/24).toFixed(3)+' DTE':'—','full entry-to-expiry duration'],['CANDIDATE RANGE',candidateRange,deskCandidateLabel()],['CANDIDATE STATUS',p.valid?(applied?'APPLIED':'NOT APPLIED'):'UNAVAILABLE',applied?'currently drives all research results':'click Apply to use it in the backtest'],['PUT ENTRY Δ',deltaText(put),'short-put exposure '+deltaText(-put)],['PUT STRIKE',fmtUSD(p.kp),fmtPct(p.lo,2)+' from entry BTC'],['CALL ENTRY Δ',csp?'NOT WRITTEN':deltaText(call),csp?'CSP only':'short-call exposure '+deltaText(-call)],['CALL STRIKE',csp?'NOT WRITTEN':fmtUSD(p.kc),csp?'CSP only':fmtPct(p.hi,2)+' from entry BTC']];
   $('entryDeltaGrid').innerHTML=cells.map(([l,v,f])=>`<div class="metric"><div class="m-label">${l}</div><div class="m-value">${v}</div><div class="m-foot">${f}</div></div>`).join('');
-  $('applyEntryDelta').disabled=!p.valid;
+  $('applyEntryDelta').disabled=!p.valid||applied;$('applyEntryDelta').textContent=applied?'Candidate range is applied':'Apply candidate as fixed range';
   $('entryDeltaNote').textContent=`${phase} · Manual IV ${(s.iv*100).toFixed(2)}%, rate ${(s.r*100).toFixed(2)}%. Entry targets use full tenor, not the shrinking current time to expiry. ${ctx.phase==='UPCOMING'?'Preview anchor can move until the session starts. ':''}${p.valid?'Long-option delta targets are shown; selling reverses their signs.':automatic?'Selection unavailable or implies an ITM strike; check the evidence and objective above.':'Enter targets from 0.01 to 0.49. Applying requires a put below entry and an active call above entry; these assumptions may otherwise imply an ITM strike.'} ${automatic?'Data-selected mode: see selection objective and validation comparison above. Missing evidence leaves estimates unavailable.':'Manual targets are scenario inputs.'}`;
 }
 function applyEntryDeltaRange(){const s=settings(),p=entryDeltaPlan(s);if(!p.valid)return;$('strategy').value='strangle';$('rangeMethod').value='manual';$('lowerPct').value=p.lo.toFixed(6);if(s.capitalMode!=='csp')$('upperPct').value=p.hi.toFixed(6);syncControls();run();}
@@ -1318,4 +1322,3 @@ let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>
 </script>
 </body>
 </html>
-
