@@ -54,6 +54,7 @@ button:disabled{opacity:.5;cursor:not-allowed}#themeBtn{min-width:40px;min-heigh
 @media(max-width:760px){.audit-toolbar .tabs{width:100%}.audit-toolbar button{flex:1;min-height:44px}.topbar-inner{flex-wrap:wrap}.brand h1{font-size:11px}.statusline{justify-content:flex-start}.metric-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.metric{overflow-wrap:anywhere}.btn,.iconbtn,.ctrl,.report-mode{min-height:44px}.tiny,.model-note{font-size:11px}.field label{font-size:10px}.controls{max-height:340px;overflow:auto}.table-wrap::before{content:'Scroll horizontally for all columns';display:block;font-size:10px;color:var(--muted);padding:6px}.data-table td,.data-table th{font-size:11px}#historicalCases .data-table td:first-child{min-width:145px}.index-details>summary,.always-visible-title{min-height:44px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}}
 </style>
+<link rel="stylesheet" href="jev/style.css">
 </head>
 <body>
 <div class="app" id="app">
@@ -71,7 +72,8 @@ button:disabled{opacity:.5;cursor:not-allowed}#themeBtn{min-width:40px;min-heigh
   <button type="button" class="view-tab" id="indexTab" role="tab" aria-selected="false" aria-controls="indexView" data-view="index">INDEX / GUIDE <span class="tab-hint">what's what</span></button>
 </nav></header>
 
-<main class="shell"><section class="app-view" id="researchView" role="tabpanel" aria-labelledby="researchTab"><div class="audit-toolbar"><div id="researchState" role="status" aria-live="polite">Loading historical data…</div><div class="tabs"><button class="iconbtn" data-jump-id="zeroDtePanel">Entry desk</button><button class="iconbtn" data-jump-id="strikeExplorer">Range explorer</button><button class="iconbtn" data-jump-id="historicalCases">Cases</button></div></div><div class="model-note" id="dataQuality" style="margin-bottom:12px">Checking data coverage…</div><div class="grid">
+<main class="shell"><section class="app-view" id="researchView" role="tabpanel" aria-labelledby="researchTab"><div class="audit-toolbar"><div id="researchState" role="status" aria-live="polite">Loading historical data…</div><div class="tabs"><button class="iconbtn" data-jump-id="zeroDtePanel">Entry desk</button><button class="iconbtn" data-jump-id="strikeExplorer">Range explorer</button><button class="iconbtn" data-jump-id="historicalCases">Cases</button></div></div><div class="model-note" id="dataQuality" style="margin-bottom:12px">Checking data coverage…</div><div id="jevMount"></div>
+<div class="grid">
 <aside class="panel controls" id="setupPanel">
   <div class="panel-head"><span class="panel-title">01 / TEST SPECIFICATION</span><span class="tiny">UTC · PRICE ONLY</span></div>
   <div class="panel-body">
@@ -760,6 +762,7 @@ function switchView(name,updateHash=true,resetScroll=true){
   $('researchView').hidden=valid!=='research';$('indexView').hidden=valid!=='index';if(updateHash)history.replaceState(null,'',valid==='index'?'#index':'#research');if(resetScroll)window.scrollTo({top:0,behavior:'auto'});if(valid==='research'&&state.daily.length)requestAnimationFrame(()=>renderAll(settings()));
 }
 function panelFromSection(code){return[...document.querySelectorAll('#researchView .panel-title')].find(el=>el.textContent.trim().startsWith(code+' /'))?.closest('.panel')||null;}
+window.JevApp={openResearch(key){const route=window.JevFeature.routes[key];if(!route)return;if(key==='index'){switchView('index');return;}const target=key==='range'?$('strikeExplorer'):panelFromSection(route.code);if(!target)throw new Error('This panel is unavailable.');switchView('research',true,false);target.scrollIntoView({behavior:'auto',block:'start'});}};
 function filterIndex(){
   const q=$('indexSearch').value.trim().toLowerCase(),items=[...document.querySelectorAll('#indexView [data-index-item]')];let shown=0;items.forEach(el=>{const hit=!q||el.textContent.toLowerCase().includes(q);el.hidden=!hit;if(hit)shown++;});
   document.querySelectorAll('#indexView [data-index-group]').forEach(group=>{const hits=group.querySelectorAll('[data-index-item]:not([hidden])').length;group.hidden=!!q&&!hits;const details=group.querySelector('.index-details');if(details&&q&&hits)details.open=true;});$('indexEmpty').hidden=shown>0;$('indexSearchCount').textContent=q?`${shown} MATCH${shown===1?'':'ES'} / ${items.length}`:`${items.length} INDEX ENTRIES`;
@@ -1351,5 +1354,10 @@ changeIds.forEach(id=>$(id).addEventListener('change',()=>{syncControls();run();
 let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>state.daily.length&&renderAll(settings()),120);});bindAuditLabels();initGuide();initExperiments();initObjectiveQuotes();syncControls();loadData().then(()=>refreshEntryContext());fetchLiveREST();connectLivePrice();setInterval(()=>{if(!Number.isFinite(state.live.price)||Date.now()-state.live.ts>30000)fetchLiveREST();if(state.daily.length)renderLivePanel(settings());},10000);
 })();
 </script>
+<script src="jev/config.js"></script>
+<script src="jev/contract.js"></script>
+<script src="jev/feature.js"></script>
+<script src="jev/client.js"></script>
+<script src="jev/adapter.js"></script>
 </body>
 </html>

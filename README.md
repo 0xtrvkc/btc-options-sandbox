@@ -413,3 +413,10 @@ Therefore scenario option P&L must not be interpreted as observed historical per
 ## Disclaimer
 
 For research and educational use only. Nothing in this repository is financial advice or a recommendation to trade BTC or options. Even fully backed and defined-risk structures can lose substantial capital.
+
+
+## Optional Jev upgrade
+
+**Plain-language research navigation.** Describe the analysis you want: path/touch risk, rolling stability, historical cases, range exploration, entry pricing or the index. Review the result, then explicitly open the panel. Unsupported and low-confidence requests have no navigation action. No strike, range, session, credit or collateral setting changes.
+
+See [JEV.md](JEV.md) for browser-first setup, privacy, input limits, tests and live-evaluation limitations. Existing functionality works without Jev configuration.
