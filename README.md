@@ -187,6 +187,17 @@ The raw second moment is a quadratic claim-burden diagnostic. It is not CVaR, de
 
 This separation follows the framework in Pasin Marupanthorn's [*Theory of European Option Underwriting Portfolios*](https://ssrn.com/abstract=7376939), while keeping the app's existing price-only evidence distinct from its hypothetical underwriting layer. The paper motivates the accounting and inference choices; it does not validate BTC 0DTE profitability.
 
+## PyBroker-inspired scenario uncertainty
+
+[PyBroker's bootstrap evaluation guide](https://www.pybroker.com/en/latest/notebooks/3.%20Evaluating%20with%20Bootstrap%20Metrics.html) motivates evaluating uncertainty and resampled drawdown rather than relying on point estimates alone. Panel 05B now adds:
+
+- **Scenario mean ROI 95% CI:** central percentile interval for mean hypothetical backed return per trade.
+- **Resampled max DD · P95:** 95th percentile of maximum drawdown across resampled paths with the same session count, using 100% sequential capital reinvestment.
+
+Both use 5,000 reproducible seeded resamples and the existing Bootstrap / Block length controls. Circular moving blocks retain short adjacent sequences; IID is a comparison. Effective block length is capped at sample count minus one and reported in the panel. At least eight finite returns are required. Drawdown is unavailable when positions overlap, timestamps are invalid, or any return is at/below −100%. Overlap checks track the latest expiry of all preceding trades, including nested positions.
+
+This is a browser-native adaptation, not a Python dependency or a claim to run PyBroker. PyBroker uses per-bar BCa intervals for profit factor/Sharpe; this app uses per-session percentile inference on hypothetical returns. The resampled drawdown percentile is not a confidence interval for observed max drawdown or a future loss bound. Unseen crashes, intratrade mark-to-market, historical premiums and costs remain absent. Fitting a range on the full sample or tuning repeatedly still adds selection bias; resampling does not remove it.
+
 ## Tail-risk diagnostics
 
 Because short-volatility strategies can be negatively skewed, the app does not stop at containment rate.

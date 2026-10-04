@@ -35,5 +35,29 @@ test('selection risks can reject every quoted candidate',()=>{const {base,raw}=q
 test('explorer fixed winner is independent of later outcomes',()=>{const a=Array.from({length:100},(_,i)=>({entryTs:i*10,expiryTs:i*10+5,ret:i%2?1:-2,pathMinRet:-3,pathMaxRet:2})),x=ctx.explorerStudy(a,.3,5,.5,false),y=ctx.explorerStudy(a.map((v,i)=>i>=70?{...v,ret:99}:v),.3,5,.5,false);assert.equal(x.rows[0].pick.p,y.rows[0].pick.p);assert.equal(x.rows[0].pick.c,y.rows[0].pick.c);assert.notEqual(x.rows[0].hold.rate,y.rows[0].hold.rate);});
 test('all panels render in four research modes with complete synthetic data',()=>{for(const mode of ['friday0dte','weekend','intraday','multi']){nodes.researchMode.value=mode;ctx.syncControls();ctx.run();assert(ctx.state.records.length>0);assert(nodes.researchState.textContent.includes('CURRENT'));assert(!nodes.caseBody.innerHTML.includes('undefined'));}});
 test('empty regime sample renders without missing-value crashes',()=>{nodes.researchMode.value='friday0dte';nodes.regime.value='dd20';ctx.syncControls();ctx.run();assert.equal(ctx.state.records.length,0);});
+test('scenario bootstrap preserves numeric returns and exact constant paths',()=>{
+  const positive=ctx.scenarioBootstrap({returns:Array(8).fill(.02),compoundable:true},'block',4,100);near(positive.meanLo,.02);near(positive.meanHi,.02);near(positive.drawdown95,0);
+  const negative=ctx.scenarioBootstrap({returns:Array(8).fill(-.1),compoundable:true},'iid',4,100);near(negative.meanLo,-.1);near(negative.meanHi,-.1);near(negative.drawdown95,1-Math.pow(.9,8));
+});
+test('scenario bootstrap is reproducible, mode-aware and does not mutate returns',()=>{
+  const returns=Array.from({length:40},(_,i)=>i<20?-.08:.1),before=[...returns],p={returns,compoundable:true},a=ctx.scenarioBootstrap(p,'block',4,500),b=ctx.scenarioBootstrap(p,'block',4,500),iid=ctx.scenarioBootstrap(p,'iid',4,500);
+  assert.deepEqual(a,b);assert.deepEqual(returns,before);assert(a.meanLo<.01&&a.meanHi>.01);assert(a.meanHi-a.meanLo>iid.meanHi-iid.meanLo);assert(a.drawdown95>=0&&a.drawdown95<=1);
+});
+test('bootstrap unavailable samples, overlap and capital exhaustion are guarded',()=>{
+  for(const returns of [[],Array(7).fill(.1),[NaN,...Array(8).fill(.1)]])assert(Number.isNaN(ctx.scenarioBootstrap({returns,compoundable:true}).meanLo));
+  const disabled=ctx.scenarioBootstrap({returns:Array(8).fill(-1),compoundable:false},'block',999,100);near(disabled.meanLo,-1);assert(Number.isNaN(disabled.drawdown95));assert.equal(disabled.blockLen,7);
+});
+test('nested overlapping trades disable sequential performance and resampled drawdown',()=>{
+  ctx.state.range={lo:-2,hi:2};const s={strategy:'strangle',capitalMode:'csp',credit:1,wing:5},a=Array.from({length:8},(_,i)=>({entryTs:i*10,expiryTs:i===0?100:i*10+5,entry:100,expiry:100})),p=ctx.scenarioPerformance(a,s);
+  assert.equal(p.overlaps,7);assert.equal(p.compoundable,false);assert(Number.isNaN(p.cagr));assert(Number.isNaN(ctx.scenarioBootstrap(p,'block',4,100).drawdown95));
+  assert.equal(ctx.scenarioPerformance([{...a[0],expiryTs:0}],s).compoundable,false);
+});
+test('scenario bootstrap metrics have guide entries and hover explanations',()=>{
+  for(const term of ['SCENARIO MEAN ROI 95% CI','RESAMPLED MAX DD · P95']){assert(html.includes(`<div class="term-name">${term}</div>`));assert(ctx.HELP_TEXT[term]);}
+  nodes.researchMode.value='friday0dte';nodes.regime.value='all';ctx.syncControls();ctx.run();assert(nodes.performanceGrid.innerHTML.includes('SCENARIO MEAN ROI 95% CI'));assert(nodes.performanceNote.innerHTML.includes('not a future loss bound'));
+});
+test('payoff plot handles a missing historical entry anchor',()=>{
+  const old=ctx.state.daily,live=ctx.state.live;ctx.state.daily=[];ctx.state.live={...live,entryPrice:NaN,price:100000,entryTs:NaN};ctx.renderPayoff({...ctx.settings(),mode:'friday0dte'});ctx.state.daily=old;ctx.state.live=live;
+});
 console.log(`${count} regression groups passed`);
 module.exports={ctx,nodes,seed};

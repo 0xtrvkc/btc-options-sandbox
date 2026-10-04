@@ -63,3 +63,15 @@ This is an engineering/research audit, not a certification of profitability or e
 - [Intraday source generator](https://github.com/0xtrvkc/dynamic-btc-analytics-dashboard/blob/main/generate_intraday_price_json.py)
 - [Original weekend options study](https://insights.deribit.com/education/option-backtest-selling-weekend-vol/)
 - [Bybit Options-Income Quant-Coach Compendium](https://github.com/seed2004/bybit-quant-coach-compendium)
+
+## PyBroker-inspired upgrade — 2026-10-04
+
+- Adapted the bootstrap-evaluation principle to hypothetical per-session backed ROI: central 95% percentile mean interval and 95th-percentile resampled maximum drawdown, with 5,000 seeded circular-block or IID resamples.
+- Report effective block length; cap blocks below sample count to avoid full-cycle resamples that force identical means. Require at least eight finite returns. Drawdown remains disabled for overlapping or invalid-timestamp trades and returns at/below −100%.
+- Fixed nested-position overlap detection by tracking the maximum expiry among all prior entries.
+- Fixed payoff-canvas rendering when current spot exists but the historical entry anchor is unavailable: clear the chart and wait for valid model inputs.
+- Added guide/hover documentation and explicit differentiation from PyBroker's per-bar BCa metrics. Existing full-sample selection bias and hypothetical-credit limitations remain.
+- Validation: all 30 regression groups pass under Node 24, including constant-path analytical drawdown, numeric-return preservation, deterministic resampling, block/IID comparison, nested overlaps, missing anchors, and four-mode rendering. `git diff --check` passes.
+- Fresh real-browser visual QA could not run locally because this environment has no Chromium executable. DOM/canvas tests exercise every panel; they do not replace browser layout inspection. Earlier browser validation above describes the earlier release.
+
+Reference: [PyBroker bootstrap metrics guide](https://www.pybroker.com/en/latest/notebooks/3.%20Evaluating%20with%20Bootstrap%20Metrics.html).
