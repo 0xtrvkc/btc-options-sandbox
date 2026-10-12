@@ -81,6 +81,21 @@ test('cumulative return toggle switches interpretation and retains selected mode
   const previous=ctx.state.records;ctx.state.records=records;ctx.renderCasePerformance(s);assert.equal(nodes.caseReturnMode.value,'simple');assert.equal(nodes.caseEquityTitle.textContent,'CUMULATIVE NON-COMPOUNDED RETURN');ctx.state.records=previous;
   nodes.caseReturnMode.value='compound';ctx.renderCaseEquity(p);assert.equal(nodes.caseEquityTitle.textContent,'SEQUENTIAL COMPOUNDED RETURN');assert(nodes.caseEquityNote.textContent.includes('Product of'));
 });
+test('return mode links drawdown, calendar and exact reinvested attribution',()=>{
+  ctx.state.range={lo:-2,hi:2};const s={strategy:'strangle',capitalMode:'csp',credit:19.6,wing:5},start=Date.UTC(2024,0,1),trades=[.2,-.1,.2].map((r,i)=>({entryTs:start+i*DAY,expiryTs:start+i*DAY+HOUR,entry:100,expiry:98-(19.6-r*98)}));
+  const compound=ctx.casePerformanceStudy(trades,s,'compound'),simple=ctx.casePerformanceStudy(trades,s,'simple');near(compound.equity,1.296);near(simple.equity,1.3);near(compound.maxDrawdown,.1);near(simple.maxDrawdown,1-1.1/1.2);assert(Number.isNaN(simple.cagr));
+  for(const p of [compound,simple])for(const x of p.points)near(x.equity-1,x.pathOption+x.pathBacking);
+  const previous=ctx.state.records;ctx.state.records=trades;nodes.caseReturnMode.value='simple';ctx.renderCasePerformance(s);assert(nodes.caseDrawdownTitle.textContent.startsWith('NON-COMPOUNDED'));assert(nodes.caseCalendarBody.innerHTML.includes('30.0%'));nodes.caseReturnMode.value='compound';ctx.renderCasePerformance(s);assert(nodes.caseCalendarBody.innerHTML.includes('29.6%'));ctx.state.records=previous;
+});
+test('start-date filtering applies to intraday weekend and multi-day evaluation, preserving training',()=>{
+  seed();const s={...ctx.settings(),lookback:'all',regime:'all'},cut=Date.UTC(2023,0,1),start='2023-01-01';
+  for(const mode of ['friday0dte','weekend','multi']){const setup={...s,mode,evaluationStart:start};const full=ctx.makeBase({...setup,evaluationStart:''},true),filtered=ctx.makeBase(setup,true),training=ctx.makeBase(setup,false);assert(filtered.length>0);assert(filtered.length<full.length);assert(filtered.every(x=>x.entryTs>=cut));assert(training.some(x=>x.entryTs<cut));assert.equal(ctx.makeBase({...setup,evaluationStart:'2099-01-01'},true).length,0);}
+  const previous=ctx.state.baseEval;ctx.state.baseEval=[];assert.equal(ctx.walkForward(s).length,0);ctx.state.baseEval=previous;
+});
+test('start-date control remains bounded by eligible sessions and curve rebases from zero',()=>{
+  seed();const s={...ctx.settings(),lookback:'all',regime:'all',evaluationStart:'2023-01-01'};nodes.replayStart.value=s.evaluationStart;ctx.syncReplayControls(s);assert(nodes.replayStart.min< s.evaluationStart);assert(nodes.replayStart.max>=s.evaluationStart);assert(Number(nodes.replaySlider.max)>0);
+  const records=ctx.makeBase(s,true);ctx.state.range={lo:-2,hi:2};const study=ctx.casePerformanceStudy(records,s,'simple');near(study.points[0].total,0);near(study.points[0].equity,1);assert.equal(study.points[0].ts,Date.parse(s.evaluationStart+'T00:00:00Z'));nodes.replayStart.value='';
+});
 console.log(`${count} regression groups passed`);
 module.exports={ctx,nodes,seed};
 
