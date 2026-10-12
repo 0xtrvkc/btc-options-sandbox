@@ -74,6 +74,13 @@ test('case analytics keep full sample, use expiry calendar, and guard path metri
   for(const a of [[],[{...trades[0],entryTs:NaN}]]){const e=ctx.casePerformanceStudy(a,s);assert(!e.compoundable);assert.equal(e.points.length,0);}
 });
 
+test('cumulative return toggle switches interpretation and retains selected mode on rerender',()=>{
+  ctx.state.range={lo:-2,hi:2};const s={strategy:'strangle',capitalMode:'csp',credit:19.6,wing:5},start=Date.UTC(2024,0,1),records=[.2,-.1].map((r,i)=>({entryTs:start+i*DAY,expiryTs:start+i*DAY+HOUR,entry:100,expiry:98-(19.6-r*98)})),p=ctx.casePerformanceStudy(records,s);
+  near(p.points.at(-1).equity-1,.08);near(p.points.at(-1).total,.1);
+  nodes.caseReturnMode.value='simple';ctx.renderCaseEquity(p);assert.equal(nodes.caseEquityTitle.textContent,'CUMULATIVE NON-COMPOUNDED RETURN');assert(nodes.caseEquityNote.textContent.includes('profits are not reinvested'));
+  const previous=ctx.state.records;ctx.state.records=records;ctx.renderCasePerformance(s);assert.equal(nodes.caseReturnMode.value,'simple');assert.equal(nodes.caseEquityTitle.textContent,'CUMULATIVE NON-COMPOUNDED RETURN');ctx.state.records=previous;
+  nodes.caseReturnMode.value='compound';ctx.renderCaseEquity(p);assert.equal(nodes.caseEquityTitle.textContent,'SEQUENTIAL COMPOUNDED RETURN');assert(nodes.caseEquityNote.textContent.includes('Product of'));
+});
 console.log(`${count} regression groups passed`);
 module.exports={ctx,nodes,seed};
 
