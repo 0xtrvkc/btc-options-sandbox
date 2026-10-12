@@ -59,5 +59,21 @@ test('scenario bootstrap metrics have guide entries and hover explanations',()=>
 test('payoff plot handles a missing historical entry anchor',()=>{
   const old=ctx.state.daily,live=ctx.state.live;ctx.state.daily=[];ctx.state.live={...live,entryPrice:NaN,price:100000,entryTs:NaN};ctx.renderPayoff({...ctx.settings(),mode:'friday0dte'});ctx.state.daily=old;ctx.state.live=live;
 });
+test('case analytics independently reconcile cumulative returns, attribution and recovery',()=>{
+  ctx.state.range={lo:-2,hi:2};const s={strategy:'strangle',capitalMode:'csp',credit:19.6,wing:5},start=Date.UTC(2024,0,1);
+  const trades=[.2,-.1,.2].map((r,i)=>({entryTs:start+i*DAY,expiryTs:start+i*DAY+HOUR,entry:100,expiry:98-(19.6-r*98)}));
+  const p=ctx.casePerformanceStudy([...trades].reverse(),s);near(p.equity,1.296);near(p.additive,.3);near(p.option,.3);near(p.backing,0);near(p.winRate,2/3);near(p.maxDrawdown,.1);near(p.profitFactor,4);near(p.avgLoss,-.1);near(p.tailMean,-.1);assert.equal(p.episodes.length,1);assert.equal(p.episodes[0].recovery,trades[2].expiryTs);near(p.longest,2);assert.equal(p.calendar[0].months[0].length,3);near(p.points.at(-1).total,p.points.at(-1).option+p.points.at(-1).backing);
+  const open=ctx.casePerformanceStudy(trades.slice(0,2),s);assert.equal(open.episodes[0].recovery,null);near(open.longest,1);
+});
+test('case analytics keep full sample, use expiry calendar, and guard path metrics',()=>{
+  ctx.state.range={lo:-2,hi:2};const s={strategy:'strangle',capitalMode:'csp',credit:1,wing:5},start=Date.UTC(2023,0,1),trades=Array.from({length:450},(_,i)=>({entryTs:start+i*DAY,expiryTs:start+i*DAY+HOUR,entry:100,expiry:100}));
+  const p=ctx.casePerformanceStudy(trades,s);assert.equal(p.n,450);assert.equal(p.points.length,451);near(p.points[20].rolling,1/98);assert(Number.isNaN(p.points[19].rolling));assert.equal(p.calendar.length,2);
+  const crossed=ctx.casePerformanceStudy([{...trades[0],entryTs:Date.UTC(2023,0,31,23),expiryTs:Date.UTC(2023,1,1,1)}],s);assert.equal(crossed.calendar[0].months[1].length,1);
+  const overlap=ctx.casePerformanceStudy([{...trades[0],expiryTs:start+2*DAY},trades[1]],s);assert(!overlap.compoundable);assert(Number.isNaN(overlap.points.at(-1).equity));assert(Number.isFinite(overlap.additive));assert.equal(overlap.episodes.length,0);
+  const exhausted=ctx.casePerformanceStudy([{...trades[0],expiry:-100}],s);assert(!exhausted.compoundable);assert(Number.isNaN(exhausted.ulcer));
+  for(const a of [[],[{...trades[0],entryTs:NaN}]]){const e=ctx.casePerformanceStudy(a,s);assert(!e.compoundable);assert.equal(e.points.length,0);}
+});
+
 console.log(`${count} regression groups passed`);
 module.exports={ctx,nodes,seed};
+
