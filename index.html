@@ -53,6 +53,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visi
 button:disabled{opacity:.5;cursor:not-allowed}#themeBtn{min-width:40px;min-height:40px}
 @media(max-width:760px){.audit-toolbar .tabs{width:100%}.audit-toolbar button{flex:1;min-height:44px}.topbar-inner{flex-wrap:wrap}.brand h1{font-size:11px}.statusline{justify-content:flex-start}.metric-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.metric{overflow-wrap:anywhere}.btn,.iconbtn,.ctrl,.report-mode{min-height:44px}.tiny,.model-note{font-size:11px}.field label{font-size:10px}.controls{max-height:340px;overflow:auto}.table-wrap::before{content:'Scroll horizontally for all columns';display:block;font-size:10px;color:var(--muted);padding:6px}.data-table td,.data-table th{font-size:11px}#historicalCases .data-table td:first-child{min-width:145px}.index-details>summary,.always-visible-title{min-height:44px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}}
+#ivDeltaTable td.iv-cell{text-align:center;padding:7px 6px}#ivDeltaTable td.iv-cell b{display:block;font-size:12px}#ivDeltaTable td.iv-cell small{display:block;color:var(--muted);font-size:9px}#ivDeltaTable td.iv-cell.nobid{opacity:.6}#ivDeltaTable td.iv-atm b{color:var(--warn)}#ivDeltaTable td.iv-exp{text-align:left;white-space:nowrap}#ivDeltaTable td.iv-exp small{display:block;color:var(--muted);font-size:9px}#ivDeltaTable td.iv-skew{font-weight:700}
 </style>
 </head>
 <body>
@@ -169,6 +170,15 @@ button:disabled{opacity:.5;cursor:not-allowed}#themeBtn{min-width:40px;min-heigh
     <div class="panel-body">
       <div class="metric-grid" id="liveGrid"></div>
       <div class="live-note"><b>Separation rule:</b> live BTC is used only for current-session monitoring, current dollar strikes, payoff/Greeks and preview values. Historical containment, calibration, walk-forward, holdout, distributions and regime statistics continue to use repository history only. Live feed is Binance BTCUSDT as a market reference, not the Deribit index or settlement TWAP.</div>
+    </div>
+  </section>
+
+  <section class="panel" id="ivDeltaPanel">
+    <div class="panel-head"><span class="panel-title">02C / IV BY DELTA</span><div class="flexhead"><span class="tiny" id="ivDeltaLabel">DERIBIT PUBLIC CHAIN · NOT LOADED</span><button class="iconbtn" id="ivDeltaRefresh" type="button">REFRESH</button></div></div>
+    <div class="panel-body">
+      <div class="tiny" style="margin-bottom:8px">Every listed expiry at a fixed delta — the axis a premium seller trades on.</div>
+      <div class="table-wrap" style="max-height:none"><table class="data-table compact" id="ivDeltaTable"><thead><tr><th style="text-align:left">EXPIRY</th><th>Δ−20</th><th>Δ−35</th><th>ATM</th><th>Δ+35</th><th>Δ+20</th><th>SKEW</th></tr></thead><tbody id="ivDeltaBody"><tr><td colspan="7" class="tiny">Loading Deribit option chain…</td></tr></tbody></table></div>
+      <div class="model-note" id="ivDeltaNote" style="margin-top:10px"></div>
     </div>
   </section>
 
@@ -581,6 +591,7 @@ const state={daily:[],intraday:[],intradayHours:NaN,pathLabel:'daily observation
 const HELP_TEXT={
   'TEST SPECIFICATION':'All assumptions for the active study. Changing a control rebuilds the sample, range, validation tests, scenario accounting, and report.',
   'FRIDAY 0DTE DESK':'Session summary: timing, sample size, empirical ranges, strike prices, model-IV move, and sensitivity to the hourly settlement proxy.',
+  'IV BY DELTA':'Live Deribit mark IV at fixed deltas (−20, −35, ATM, +35, +20) for every listed expiry. Delta is computed here from each expiry’s forward; it is a current snapshot and never changes the historical containment results.',
   'LIVE SESSION MONITOR':'Current-market context only. Live BTC updates strikes, countdowns, payoff markers, and Greeks; it never rewrites historical results.',
   'EXPIRY RETURN DISTRIBUTION':'Observed entry-to-expiry BTC returns shown as a histogram, empirical CDF, or normal Q-Q plot.',
   'DESCRIPTIVES + DIAGNOSTICS':'Summary statistics, tail-shape tests, confidence intervals, and lag-1 dependence for the currently matched return sample.',
@@ -1448,7 +1459,48 @@ const changeIds=['deskCoverage','quoteTailLimit','deskSelectionMode','entryPutDe
 $('deskSelectionMode').addEventListener('change',()=>{if($('deskSelectionMode').value==='manual'){if(!(+ $('entryPutDelta').value>=.01&&+ $('entryPutDelta').value<=.49))$('entryPutDelta').value=.25;if(!(+ $('entryCallDelta').value>=.01&&+ $('entryCallDelta').value<=.49))$('entryCallDelta').value=.30;}});
 $('applyEntryDelta').addEventListener('click',applyEntryDeltaRange);
 changeIds.forEach(id=>$(id).addEventListener('change',()=>{syncControls();run();refreshEntryContext();}));$('runBtn').addEventListener('click',run);$('defaultBtn').addEventListener('click',setFriday0DteDefaults);$('themeBtn').addEventListener('click',()=>{const root=document.documentElement;root.dataset.theme=root.dataset.theme==='light'?'dark':'light';renderAll(settings());});document.querySelectorAll('[data-report-mode]').forEach(btn=>btn.addEventListener('click',()=>{state.reportMode=btn.dataset.reportMode;state.daily.length&&renderReport(settings());}));
-let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>state.daily.length&&renderAll(settings()),120);});bindAuditLabels();initGuide();initCasePerformance();initExperiments();initObjectiveQuotes();syncControls();loadData().then(()=>refreshEntryContext());fetchLiveREST();connectLivePrice();setInterval(()=>{if(!Number.isFinite(state.live.price)||Date.now()-state.live.ts>30000)fetchLiveREST();if(state.daily.length)renderLivePanel(settings());},10000);
+const IV_URL='https://www.deribit.com/api/v2/public/get_book_summary_by_currency?currency=BTC&kind=option';
+const IV_MONTHS={JAN:0,FEB:1,MAR:2,APR:3,MAY:4,JUN:5,JUL:6,AUG:7,SEP:8,OCT:9,NOV:10,DEC:11};
+const IV_MAX_GAP=.15;
+function ivState(){return state.ivDelta||(state.ivDelta={rows:[],asOf:NaN,count:0,status:'NOT LOADED',error:'',busy:false});}
+function parseDeribitOption(name){const m=/^BTC-(\d{1,2})([A-Z]{3})(\d{2})-(\d+)-([CP])$/.exec(String(name));if(!m||!Object.prototype.hasOwnProperty.call(IV_MONTHS,m[2]))return null;return{expiryTs:Date.UTC(2000+Number(m[3]),IV_MONTHS[m[2]],Number(m[1]),8),strike:Number(m[4]),type:m[5]==='C'?'call':'put'};}
+function ivDeltaChain(rows,asOf){
+  const byExpiry=new Map();
+  for(const r of Array.isArray(rows)?rows:[]){
+    const p=parseDeribitOption(r&&r.instrument_name),iv=Number(r&&r.mark_iv)/100,F=Number(r&&r.underlying_price),T=p?(p.expiryTs-asOf)/(365*DAY):NaN;
+    if(!p||!(iv>0)||!(F>0)||!(T>0))continue;
+    const delta=bsGreeks(F,p.strike,T,0,iv,p.type).delta;
+    if(!Number.isFinite(delta))continue;
+    if(!byExpiry.has(p.expiryTs))byExpiry.set(p.expiryTs,{expiryTs:p.expiryTs,T,F,opts:[]});
+    byExpiry.get(p.expiryTs).opts.push({strike:p.strike,type:p.type,iv,delta,bid:Number(r.bid_price)>0});
+  }
+  return [...byExpiry.values()].sort((a,b)=>a.expiryTs-b.expiryTs).map(e=>{
+    const pick=(type,target)=>{let best=null;for(const o of e.opts){if(o.type!==type)continue;const gap=Math.abs(o.delta-target);if(gap<=IV_MAX_GAP&&(!best||gap<best.gap))best={...o,gap};}return best;};
+    const atmK=e.opts.reduce((k,o)=>k===null||Math.abs(o.strike-e.F)<Math.abs(k-e.F)?o.strike:k,null),atm=e.opts.filter(o=>o.strike===atmK);
+    const atmCell=atm.length?{strike:atmK,iv:atm.reduce((s,o)=>s+o.iv,0)/atm.length,delta:(atm.find(o=>o.type==='call')||atm[0]).delta,bid:atm.some(o=>o.bid)}:null;
+    const p20=pick('put',-.20),p35=pick('put',-.35),c35=pick('call',.35),c20=pick('call',.20);
+    return{expiryTs:e.expiryTs,days:Math.ceil(e.T*365),forward:e.F,cells:{p20,p35,atm:atmCell,c35,c20},skew:p20&&c20?(p20.iv-c20.iv)*100:NaN};
+  });
+}
+function renderIvDelta(){
+  const st=ivState(),cell=(c,atm)=>!c?'<td class="iv-cell">—</td>':`<td class="iv-cell${atm?' iv-atm':''}${c.bid?'':' nobid'}"${c.bid?'':' title="No bid at this strike: mark IV only"'}><b>${(c.iv*100).toFixed(2)}%</b><small>${c.strike.toLocaleString('en-US')} · Δ${c.delta<0?'−':''}${Math.abs(c.delta).toFixed(2)}</small></td>`;
+  const when=Number.isFinite(st.asOf)?' · '+new Date(st.asOf).toISOString().slice(11,19)+' UTC':'',n=st.count?' · '+st.count+' INSTRUMENTS':'';
+  $('ivDeltaLabel').textContent='DERIBIT PUBLIC CHAIN · '+st.status+when+n;
+  $('ivDeltaBody').innerHTML=st.rows.length?st.rows.map(r=>{const c=r.cells,sk=r.skew,skew=Number.isFinite(sk)?`<td class="iv-skew" style="color:var(${sk<0?'--purple':'--cyan'})">${sk<0?'−':'+'}${Math.abs(sk).toFixed(2)}</td>`:'<td class="iv-skew">—</td>';return`<tr><td class="iv-exp">${new Date(r.expiryTs).toLocaleDateString('en-US',{month:'short',day:'numeric',timeZone:'UTC'})}<small>${r.days}d</small></td>${cell(c.p20)}${cell(c.p35)}${cell(c.atm,true)}${cell(c.c35)}${cell(c.c20)}${skew}</tr>`;}).join(''):`<tr><td colspan="7" class="tiny">${st.status==='FAILED'?'Could not load the Deribit chain'+(st.error?' ('+st.error.replace(/[<>&]/g,'')+')':'')+'. The browser may be blocking the request; use Refresh to retry.':st.status==='LOADING'?'Loading Deribit option chain…':'No option chain loaded.'}</td></tr>`;
+  $('ivDeltaNote').innerHTML='<b>Method:</b> mark IV from Deribit’s public book summary at the listed strike nearest each target delta (within ±0.15Δ, otherwise —). Delta is computed here with Black–76 using each expiry’s own forward and r = 0, not read from the exchange. ATM is the strike nearest the forward (call and put IV averaged). SKEW = Δ−20 put IV minus Δ+20 call IV, in vol points. Dimmed cells have no bid. Mark IV is not an executable price. This is a current snapshot only: it is not part of the historical sample and does not change any range or result.';
+}
+async function loadIvDelta(){
+  const st=ivState();if(st.busy)return;st.busy=true;st.status='LOADING';renderIvDelta();
+  try{
+    const r=await fetch(IV_URL,{cache:'no-store',signal:AbortSignal.timeout(15000)});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const j=await r.json();if(!j||!Array.isArray(j.result))throw new Error('unexpected response');
+    const asOf=Date.now();st.rows=ivDeltaChain(j.result,asOf);st.asOf=asOf;st.count=j.result.length;st.status=st.rows.length?'LIVE':'EMPTY';st.error='';
+  }catch(e){st.status='FAILED';st.error=String(e&&e.message||e).slice(0,120);}
+  finally{st.busy=false;renderIvDelta();}
+}
+function initIvDelta(){$('ivDeltaRefresh').addEventListener('click',loadIvDelta);renderIvDelta();loadIvDelta();setInterval(()=>{if(!document.hidden)loadIvDelta();},120000);}
+let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>state.daily.length&&renderAll(settings()),120);});bindAuditLabels();initGuide();initCasePerformance();initExperiments();initObjectiveQuotes();initIvDelta();syncControls();loadData().then(()=>refreshEntryContext());fetchLiveREST();connectLivePrice();setInterval(()=>{if(!Number.isFinite(state.live.price)||Date.now()-state.live.ts>30000)fetchLiveREST();if(state.daily.length)renderLivePanel(settings());},10000);
 })();
 </script>
 </body>

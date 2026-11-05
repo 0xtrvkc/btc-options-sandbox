@@ -96,6 +96,44 @@ test('start-date control remains bounded by eligible sessions and curve rebases 
   seed();const s={...ctx.settings(),lookback:'all',regime:'all',evaluationStart:'2023-01-01'};nodes.replayStart.value=s.evaluationStart;ctx.syncReplayControls(s);assert(nodes.replayStart.min< s.evaluationStart);assert(nodes.replayStart.max>=s.evaluationStart);assert(Number(nodes.replaySlider.max)>0);
   const records=ctx.makeBase(s,true);ctx.state.range={lo:-2,hi:2};const study=ctx.casePerformanceStudy(records,s,'simple');near(study.points[0].total,0);near(study.points[0].equity,1);assert.equal(study.points[0].ts,Date.parse(s.evaluationStart+'T00:00:00Z'));nodes.replayStart.value='';
 });
+function ivChain(asOf,expiryLabel,F,strikes,ivOf,bid=.01){const rows=[];for(const K of strikes)for(const t of ['C','P'])rows.push({instrument_name:`BTC-${expiryLabel}-${K}-${t}`,mark_iv:ivOf(K),underlying_price:F,bid_price:bid,open_interest:1});return rows;}
+function indepDelta(F,K,T,sigma,type){const cdf=x=>{const s=x<0?-1:1,t=1/(1+.3275911*Math.abs(x)/Math.SQRT2),y=1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-.284496736)*t+.254829592)*t*Math.exp(-x*x/2);return .5*(1+s*y);},d1=(Math.log(F/K)+.5*sigma*sigma*T)/(sigma*Math.sqrt(T));return type==='call'?cdf(d1):cdf(d1)-1;}
+test('IV by delta parses Deribit instrument names and rejects malformed ones',()=>{
+  const p=ctx.parseDeribitOption('BTC-13NOV26-83000-P');assert.equal(p.expiryTs,Date.UTC(2026,10,13,8));assert.equal(p.strike,83000);assert.equal(p.type,'put');
+  const c=ctx.parseDeribitOption('BTC-5NOV26-80000-C');assert.equal(c.expiryTs,Date.UTC(2026,10,5,8));assert.equal(c.type,'call');
+  for(const bad of ['ETH-13NOV26-83000-P','BTC-PERPETUAL','BTC-13XXX26-83000-C','BTC-13NOV26-83000-X','BTC-13NOV26-ABC-C',undefined,null])assert.equal(ctx.parseDeribitOption(bad),null);
+});
+test('IV by delta uses forward-based delta, nearest listed strike, and put-minus-call skew',()=>{
+  const asOf=Date.UTC(2026,10,5,9),F=80000,strikes=Array.from({length:41},(_,i)=>60000+i*1000),T=(Date.UTC(2026,10,13,8)-asOf)/(365*DAY);
+  const rows=ctx.ivDeltaChain(ivChain(asOf,'13NOV26',F,strikes,K=>K<F?55:K===F?50:45),asOf);assert.equal(rows.length,1);const r=rows[0];
+  assert.equal(r.days,8);assert.equal(r.forward,F);
+  const want=[['p20','put',-.20],['p35','put',-.35],['c35','call',.35],['c20','call',.20]];
+  for(const [key,type,target] of want){const x=r.cells[key];assert(x,key);assert.equal(x.type,type);near(x.delta,indepDelta(F,x.strike,T,x.iv,type),1e-6);assert(Math.abs(x.delta-target)<.05,key+' within strike spacing');
+    for(const K of strikes){const d=indepDelta(F,K,T,(K<F?55:K===F?50:45)/100,type);if(!(type==='put'?K<F:K>F))continue;assert(Math.abs(x.delta-target)<=Math.abs(d-target)+1e-6,key+' is nearest listed strike');}}
+  assert(r.cells.p20.strike<F&&r.cells.c20.strike>F);assert(r.cells.p35.strike>r.cells.p20.strike&&r.cells.p35.strike<F);assert(r.cells.c35.strike<r.cells.c20.strike);
+  assert.equal(r.cells.atm.strike,80000);near(r.cells.atm.iv,.5);assert(r.cells.atm.bid);near(r.skew,10,1e-9);
+});
+test('IV by delta skips expired, invalid and out-of-tolerance data',()=>{
+  const asOf=Date.UTC(2026,10,5,9),F=80000,ok=ivChain(asOf,'13NOV26',F,[78000,80000,82000],()=>50);
+  const bad=[...ivChain(asOf,'4NOV26',F,[80000],()=>50),{instrument_name:'BTC-13NOV26-79000-C',mark_iv:0,underlying_price:F},{instrument_name:'BTC-13NOV26-79000-P',mark_iv:null,underlying_price:F},{instrument_name:'BTC-13NOV26-79500-C',mark_iv:50,underlying_price:0},{instrument_name:'BTC-13NOV26-79500-P',mark_iv:NaN,underlying_price:F},null,{}];
+  const rows=ctx.ivDeltaChain([...ok,...bad],asOf);assert.equal(rows.length,1);assert.equal(rows[0].expiryTs,Date.UTC(2026,10,13,8));assert.equal(rows[0].cells.atm.strike,80000);
+  const far=ctx.ivDeltaChain(ivChain(asOf,'13NOV26',F,[60000],()=>50),asOf)[0];assert.equal(far.cells.p20,null);assert.equal(far.cells.c20,null);assert(Number.isNaN(far.skew));assert.equal(far.cells.atm.strike,60000);
+  assert.equal(ctx.ivDeltaChain(null,asOf).length,0);assert.equal(ctx.ivDeltaChain([],asOf).length,0);
+});
+test('IV by delta renders a complete table, dims no-bid cells, and handles empty or failed states',()=>{
+  const asOf=Date.UTC(2026,10,5,9),F=80000,strikes=Array.from({length:41},(_,i)=>60000+i*1000),chain=ivChain(asOf,'13NOV26',F,strikes,K=>K<F?55:K===F?50:45);
+  for(const x of chain)if(/-6[0-9]000-P$/.test(x.instrument_name))x.bid_price=0;
+  const st=ctx.state.ivDelta=ctx.state.ivDelta||{};Object.assign(st,{rows:ctx.ivDeltaChain(chain,asOf),asOf,count:chain.length,status:'LIVE',error:'',busy:false});ctx.renderIvDelta();
+  const html=nodes.ivDeltaBody.innerHTML;assert(html.includes('Nov 13'));assert(html.includes('%'));assert(html.includes('+10.00'));assert(!html.includes('undefined'));assert(!html.includes('NaN'));assert(nodes.ivDeltaLabel.textContent.includes('LIVE'));assert(nodes.ivDeltaLabel.textContent.includes(String(chain.length)));assert(nodes.ivDeltaNote.innerHTML.includes('not an executable price'));
+  Object.assign(st,{rows:ctx.ivDeltaChain(ivChain(asOf,'13NOV26',F,[60000],()=>50),asOf)});ctx.renderIvDelta();assert(nodes.ivDeltaBody.innerHTML.includes('—'));assert(!nodes.ivDeltaBody.innerHTML.includes('NaN'));
+  Object.assign(st,{rows:[],status:'FAILED',error:'<b>HTTP 403</b>'});ctx.renderIvDelta();assert(nodes.ivDeltaBody.innerHTML.includes('Could not load'));assert(!nodes.ivDeltaBody.innerHTML.includes('<b>HTTP'));
+  Object.assign(st,{rows:[],status:'NOT LOADED',error:''});ctx.renderIvDelta();assert(nodes.ivDeltaBody.innerHTML.includes('No option chain loaded'));
+});
+test('IV by delta panel exists with hover help and does not alter historical records',()=>{
+  assert(html.includes('id="ivDeltaPanel"'));assert(html.includes('02C / IV BY DELTA'));assert(ctx.HELP_TEXT['IV BY DELTA']);
+  seed();nodes.researchMode.value='friday0dte';nodes.regime.value='all';ctx.syncControls();ctx.run();const before=ctx.state.records.length;ctx.state.ivDelta.rows=[];ctx.renderIvDelta();ctx.run();assert.equal(ctx.state.records.length,before);
+});
+(async()=>{ctx.state.ivDelta.busy=false;await ctx.loadIvDelta();assert.equal(ctx.state.ivDelta.status,'FAILED');assert(ctx.state.ivDelta.error.includes('offline test'));assert.equal(ctx.state.ivDelta.busy,false);count++;console.log('PASS IV by delta load failure is reported without throwing');})();
 console.log(`${count} regression groups passed`);
 module.exports={ctx,nodes,seed};
 

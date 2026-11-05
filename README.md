@@ -298,6 +298,20 @@ The live market reference is **not** treated as historical research data and doe
 
 It is also not the Deribit settlement index or the exact Deribit settlement TWAP.
 
+## IV by delta (live snapshot)
+
+Panel **02C** shows the market-implied side that the price-only history cannot: mark implied volatility at fixed deltas (Δ−20, Δ−35, ATM, Δ+35, Δ+20) for every listed BTC expiry, with skew.
+
+- **Source:** one call to Deribit's public `get_book_summary_by_currency` endpoint (`currency=BTC&kind=option`). No API key. It refreshes every two minutes while the tab is visible, and on demand with the Refresh button.
+- **Delta is computed here, not read from the exchange.** The book summary has no delta field, so delta uses Black–76 with each expiry's own forward (`underlying_price`) and r = 0.
+- **Strike selection:** for each target, the listed strike with delta nearest the target, accepted only within ±0.15Δ (otherwise shown as —). ATM is the strike nearest the forward, with call and put mark IV averaged.
+- **Skew:** Δ−20 put IV minus Δ+20 call IV, in vol points.
+- **Mark IV is not an executable price.** Cells with no bid are dimmed.
+- **Snapshot only.** It is not stored, is not part of the historical sample, and does not change any range, containment result or scenario.
+- **Browser access:** the panel needs Deribit to allow cross-origin requests from wherever the app is hosted. If the request is blocked, the panel says so and the rest of the app is unaffected.
+
+To compare implied against realized over time, snapshots would have to be recorded on a schedule (for example Friday 00:00 UTC) in the companion data repository; this app does not do that.
+
 ## Structure-aware payoff and Greeks
 
 The sandbox includes a model layer for the selected capital structure:
@@ -399,8 +413,8 @@ It does not know the historical:
 
 - option bid/ask
 - option premium
-- implied volatility surface
-- option delta used by the exchange
+- implied volatility surface (the live IV-by-delta panel is a current snapshot only)
+- option delta used by the exchange (the live panel computes its own)
 - slippage
 - fees
 - margin impact
