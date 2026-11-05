@@ -307,7 +307,19 @@ Panel **02C** shows the market-implied side that the price-only history cannot: 
 - **Strike selection:** for each target, the listed strike with delta nearest the target, accepted only within ±0.15Δ (otherwise shown as —). ATM is the strike nearest the forward, with call and put mark IV averaged.
 - **Skew:** Δ−20 put IV minus Δ+20 call IV, in vol points.
 - **Mark IV is not an executable price.** Cells with no bid are dimmed.
-- **Snapshot only.** It is not stored, is not part of the historical sample, and does not change any range, containment result or scenario.
+- **Snapshot only.** It is not stored and is not part of the historical sample. Nothing changes any range, containment result or scenario until you click **Apply** (below).
+
+### Researching the live strikes
+
+Under the table, the panel can turn the live Δ−20/Δ+20 (or Δ−35/Δ+35) strikes into the fixed range that drives the historical research, including **20 / Historical Cases**:
+
+- **Expiry match.** The Deribit expiry must equal the research session's expiry (for Friday 0DTE, Friday 08:00 UTC). If none is listed, the preset has no single expiry (multi-day), the snapshot is older than 10 minutes, or the session has expired, Apply is disabled and the reason is shown.
+- **Range.** The put and call strikes become % distances from the app's anchor price (the current BTC reference before entry; the session entry price once active) and are applied as a manual strangle range. A cash-secured put applies the put side only. A strike on the wrong side of the anchor is refused.
+- **Credit.** The shared hypothetical credit is set to the short legs' best bids (converted from BTC to USD with Deribit's index price) as a % of the anchor. If either leg has no bid, the credit input is left unchanged. Protective wings are not priced, so a defined-risk credit is short legs only.
+- **Implied vs realized.** Shows the risk-neutral probability of finishing inside the two strikes (each strike's own IV, Black–76) next to the historical containment of the same range over the loaded sample, plus the gap in points. The gap is not an edge by itself: implied probabilities include a risk premium, and past premiums at these deltas are unknown.
+- **Labeling.** While the applied range is active, the Historical Cases header is tagged with the live snapshot (delta, expiry, snapshot time). Changing the range or strategy removes the tag.
+
+Historical P&L from this action is still scenario P&L: one credit reused for every past session, as everywhere else in the app. The credit input now accepts any decimal (previously steps of 0.1).
 - **Browser access:** the panel needs Deribit to allow cross-origin requests from wherever the app is hosted. If the request is blocked, the panel says so and the rest of the app is unaffected.
 
 To compare implied against realized over time, snapshots would have to be recorded on a schedule (for example Friday 00:00 UTC) in the companion data repository; this app does not do that.

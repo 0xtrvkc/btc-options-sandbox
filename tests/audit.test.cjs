@@ -133,6 +133,64 @@ test('IV by delta panel exists with hover help and does not alter historical rec
   assert(html.includes('id="ivDeltaPanel"'));assert(html.includes('02C / IV BY DELTA'));assert(ctx.HELP_TEXT['IV BY DELTA']);
   seed();nodes.researchMode.value='friday0dte';nodes.regime.value='all';ctx.syncControls();ctx.run();const before=ctx.state.records.length;ctx.state.ivDelta.rows=[];ctx.renderIvDelta();ctx.run();assert.equal(ctx.state.records.length,before);
 });
+function liveChain(now,expLabel,F,strikes,bidBtc=.0005,index=80000){const rows=ivChain(now,expLabel,F,strikes,K=>K<F?55:K===F?50:45,bidBtc);for(const r of rows)r.estimated_delivery_price=index;return rows;}
+function cdfStd(x){const s=x<0?-1:1,t=1/(1+.3275911*Math.abs(x)/Math.SQRT2),y=1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-.284496736)*t+.254829592)*t*Math.exp(-x*x/2);return .5*(1+s*y);}
+function setChain(now,rows){ctx.state.ivDelta={rows:ctx.ivDeltaChain(rows,now),asOf:now,count:rows.length,status:'LIVE',error:'',busy:false};}
+function resetResearchControls(){nodes.researchMode.value='friday0dte';nodes.capitalMode.value='covered';nodes.strategy.value='strangle';nodes.rangeMethod.value='manual';nodes.lowerPct.value='-2';nodes.upperPct.value='2';nodes.creditPct.value='2';nodes.ivApplyDelta.value='20';}
+function withLiveSession(now,fn){const orig=ctx.Date,live0=ctx.state.live;class Frozen extends Date{static now(){return now;}}ctx.Date=Frozen;ctx.state.live={...live0,price:80000,ts:now,entryPrice:NaN,entryTs:NaN};try{seed();resetResearchControls();ctx.syncControls();ctx.run();fn();}finally{ctx.Date=orig;ctx.state.live=live0;resetResearchControls();ctx.state.ivApplied=null;}}
+test('IV by delta cells carry USD bid and risk-neutral exceedance probability',()=>{
+  const asOf=Date.UTC(2026,10,5,9),F=80000,T=(Date.UTC(2026,10,13,8)-asOf)/(365*DAY),rows=liveChain(asOf,'13NOV26',F,[78000,80000,82000],.001,79000);
+  const r=ctx.ivDeltaChain(rows,asOf)[0],put=r.cells.atm;assert(put);
+  const chain=ctx.ivDeltaChain(rows,asOf)[0],opts=[['put',78000],['call',82000]];
+  for(const [type,K] of opts){const c=[chain.cells.p20,chain.cells.p35,chain.cells.c35,chain.cells.c20].find(x=>x&&x.type===type&&x.strike===K);assert(c,type+K);near(c.bidUsd,.001*79000,1e-9);const iv=c.iv,d2=(Math.log(F/K)-.5*iv*iv*T)/(iv*Math.sqrt(T));near(c.itm,type==='put'?cdfStd(-d2):cdfStd(d2),1e-6);}
+  const noIdx=liveChain(asOf,'13NOV26',F,Array.from({length:41},(_,i)=>70000+i*500),.001);for(const x of noIdx)delete x.estimated_delivery_price;const c2=ctx.ivDeltaChain(noIdx,asOf)[0].cells.p20;assert(c2);near(c2.bidUsd,.001*F,1e-9);
+  const noBid=ctx.ivDeltaChain(liveChain(asOf,'13NOV26',F,[80000],0),asOf)[0].cells.atm;assert.equal(noBid.bid,false);
+});
+test('live strikes plan matches the session expiry, anchors to spot, prices credit from bids and compares implied vs realized',()=>{
+  const now=Date.UTC(2026,10,5,9,15),F=80050,strikes=Array.from({length:49},(_,i)=>74000+i*250);
+  withLiveSession(now,()=>{
+    setChain(now,liveChain(now,'6NOV26',F,strikes));
+    const s=ctx.settings(),p=ctx.ivLivePlan(s),T=(Date.UTC(2026,10,6,8)-now)/(365*DAY);
+    assert(p.valid,p.reason);assert.equal(p.expiryTs,Date.UTC(2026,10,6,8));assert.equal(p.anchor,80000);assert.equal(p.target,20);
+    assert(p.put.strike<80000&&p.call.strike>80000);near(p.lo,(p.put.strike/80000-1)*100,1e-9);near(p.hi,(p.call.strike/80000-1)*100,1e-9);
+    assert(Math.abs(p.put.delta+.2)<.05&&Math.abs(p.call.delta-.2)<.05);
+    near(p.creditUsd,.0005*80000*2,1e-9);near(p.credit,.1,1e-9);
+    const d2=(K,iv)=>(Math.log(F/K)-.5*iv*iv*T)/(iv*Math.sqrt(T));
+    near(p.implied,1-cdfStd(-d2(p.put.strike,p.put.iv))-cdfStd(d2(p.call.strike,p.call.iv)),1e-6);
+    const base=ctx.state.baseEval;assert(base.length>0);assert.equal(p.n,base.length);near(p.hist,base.filter(x=>x.ret>=p.lo&&x.ret<=p.hi).length/base.length,1e-12);
+    nodes.ivApplyDelta.value='35';const p35=ctx.ivLivePlan(ctx.settings());assert.equal(p35.target,35);assert(Math.abs(p35.put.delta+.35)<.05&&Math.abs(p35.call.delta-.35)<.05);assert(p35.put.strike>p.put.strike&&p35.call.strike<p.call.strike);nodes.ivApplyDelta.value='20';
+    ctx.applyLiveStrikes();
+    assert.equal(nodes.strategy.value,'strangle');assert.equal(nodes.rangeMethod.value,'manual');assert.equal(nodes.lowerPct.value,p.lo.toFixed(6));assert.equal(nodes.upperPct.value,p.hi.toFixed(6));assert.equal(nodes.creditPct.value,'0.1000');
+    assert(Math.abs(ctx.state.range.lo-p.lo)<1e-5&&Math.abs(ctx.state.range.hi-p.hi)<1e-5);assert(ctx.state.records.length>0&&ctx.state.records.every(x=>x.lo===ctx.state.range.lo&&x.hi===ctx.state.range.hi));
+    assert(ctx.ivAppliedActive(ctx.settings()));assert(nodes.caseLabel.textContent.includes('LIVE 20Δ STRIKES'));assert(nodes.caseLabel.textContent.includes('NOV 6'));assert(nodes.ivApplyGrid.innerHTML.includes('>APPLIED<'));assert(nodes.ivApplyGrid.innerHTML.includes('HISTORICAL INSIDE'));assert.equal(nodes.applyLiveStrikes.disabled,false);
+    nodes.lowerPct.value='-5';ctx.run();assert(!ctx.ivAppliedActive(ctx.settings()));assert(!nodes.caseLabel.textContent.includes('LIVE'));assert(nodes.ivApplyGrid.innerHTML.includes('>NOT APPLIED<'));
+    ctx.applyLiveStrikes();assert(ctx.ivAppliedActive(ctx.settings()));nodes.strategy.value='straddle';ctx.syncControls();ctx.run();assert(!ctx.ivAppliedActive(ctx.settings()));
+  });
+});
+test('live strikes guard unmatched expiry, stale snapshot, sparse strikes, wrong preset and missing bids',()=>{
+  const now=Date.UTC(2026,10,5,9,15),F=80050,strikes=Array.from({length:49},(_,i)=>74000+i*250);
+  withLiveSession(now,()=>{
+    setChain(now,liveChain(now,'7NOV26',F,strikes));let p=ctx.ivLivePlan(ctx.settings());assert(!p.valid&&p.reason.includes('lists no expiry'));
+    ctx.renderIvApply(ctx.settings());assert.equal(nodes.applyLiveStrikes.disabled,true);assert.equal(nodes.ivApplyGrid.innerHTML,'');
+    setChain(now,liveChain(now,'6NOV26',F,strikes));ctx.state.ivDelta.asOf=now-11*60000;p=ctx.ivLivePlan(ctx.settings());assert(!p.valid&&p.reason.includes('older than 10 minutes'));
+    setChain(now,liveChain(now,'6NOV26',F,[60000]));p=ctx.ivLivePlan(ctx.settings());assert(!p.valid&&p.reason.includes('No listed strike'));
+    ctx.state.ivDelta={rows:[],asOf:NaN,count:0,status:'NOT LOADED',error:'',busy:false};p=ctx.ivLivePlan(ctx.settings());assert(!p.valid&&p.reason.includes('No option chain'));
+    setChain(now,liveChain(now,'6NOV26',F,strikes));nodes.researchMode.value='multi';ctx.syncControls();p=ctx.ivLivePlan(ctx.settings());assert(!p.valid&&p.reason.includes('no single session expiry'));nodes.researchMode.value='friday0dte';ctx.syncControls();
+    setChain(now,liveChain(now,'6NOV26',F,strikes,0));p=ctx.ivLivePlan(ctx.settings());assert(p.valid);assert(Number.isNaN(p.creditUsd));ctx.renderIvApply(ctx.settings());assert(nodes.ivApplyGrid.innerHTML.includes('NO BID'));ctx.applyLiveStrikes();assert.equal(nodes.creditPct.value,'2');assert(ctx.ivAppliedActive(ctx.settings()));
+    resetResearchControls();ctx.syncControls();nodes.capitalMode.value='csp';ctx.syncControls();setChain(now,liveChain(now,'6NOV26',F,strikes));nodes.upperPct.value='3';p=ctx.ivLivePlan(ctx.settings());
+    assert(p.valid&&p.csp&&p.call===null&&Number.isNaN(p.hi));near(p.credit,.05,1e-9);near(p.implied,1-p.put.itm,1e-12);const base=ctx.state.baseEval;near(p.hist,base.filter(x=>x.ret>=p.lo).length/base.length,1e-12);
+    ctx.applyLiveStrikes();assert.equal(nodes.upperPct.value,'3');assert.equal(nodes.lowerPct.value,p.lo.toFixed(6));assert(nodes.ivApplyGrid.innerHTML.includes('NOT WRITTEN'));assert(nodes.ivApplyGrid.innerHTML.includes('IMPLIED ABOVE PUT'));
+  });
+  withLiveSession(Date.UTC(2026,10,6,9),()=>{ctx.state.ivDelta={rows:[{expiryTs:Date.UTC(2026,10,6,8),cells:{}}],asOf:Date.UTC(2026,10,6,9),count:1,status:'LIVE',error:'',busy:false};const p=ctx.ivLivePlan(ctx.settings());assert(!p.valid&&p.reason.includes('already expired'));});
+});
+test('live strikes use the session entry price as anchor once the session is active',()=>{
+  const now=Date.UTC(2026,10,6,3),F=80050,strikes=Array.from({length:49},(_,i)=>74000+i*250);
+  withLiveSession(now,()=>{
+    ctx.state.live.entryPrice=80300;ctx.state.live.entryTs=Date.UTC(2026,10,6,0);setChain(now,liveChain(now,'6NOV26',F,strikes));
+    const p=ctx.ivLivePlan(ctx.settings());assert(p.valid,p.reason);assert.equal(p.anchor,80300);near(p.lo,(p.put.strike/80300-1)*100,1e-9);near(p.hi,(p.call.strike/80300-1)*100,1e-9);near(p.credit,80/80300*100,1e-9);
+    ctx.state.live.entryPrice=79000;const bad=ctx.ivLivePlan(ctx.settings());assert(!bad.valid&&bad.reason.includes('expected sides'));
+  });
+});
 (async()=>{ctx.state.ivDelta.busy=false;await ctx.loadIvDelta();assert.equal(ctx.state.ivDelta.status,'FAILED');assert(ctx.state.ivDelta.error.includes('offline test'));assert.equal(ctx.state.ivDelta.busy,false);count++;console.log('PASS IV by delta load failure is reported without throwing');})();
 console.log(`${count} regression groups passed`);
 module.exports={ctx,nodes,seed};
