@@ -324,6 +324,19 @@ Historical P&L from this action is still scenario P&L: one credit reused for eve
 
 To compare implied against realized over time, snapshots would have to be recorded on a schedule (for example Friday 00:00 UTC) in the companion data repository; this app does not do that.
 
+## Carry monitor (live snapshot)
+
+Panel **02D** puts the dated-futures carry trade next to the option-selling panels, so you can see which income source is paying right now. It is context only. It does not feed the historical research and changes no range or result.
+
+- **Source:** Bybit's public v5 market endpoints, no API key: `tickers` (mark, index, best bid/ask for the dated `BTCUSDT-DDMMMYY` futures and the perpetual), `instruments-info` (each future's `deliveryTime`), and `funding/history` (last 21 funding prints). It refreshes every two minutes while the tab is visible, and on demand with the Refresh button.
+- **Basis:** `mark ÷ index − 1`. **Annualized:** `basis × 365 ÷ days to delivery` (simple, not compounded). Dated futures have no funding; their basis converges to zero at delivery.
+- **Executable column:** the same annualization using the best bid instead of mark, which is what a cash-and-carry seller actually gets for the future. It still excludes buying spot at the ask and all fees, so treat it as an upper bound.
+- **Best contract:** the highest bid-based annualized carry among contracts with at least 2 days to delivery. Shorter contracts are dimmed and excluded, because annualizing a tiny basis over a few hours is noise.
+- **Perpetual funding:** the current rate and the average of the last 21 prints, annualized by the perpetual's own funding interval (from `instruments-info`; 8h is assumed and flagged if it is missing). A positive rate means longs pay shorts. Funding floats each interval and can turn negative, while a dated future locks its rate to delivery.
+- **Vol context:** Deribit ATM mark IV for the expiry nearest 7 days (from the IV-by-delta panel) divided by the HAR-like RV forecast. If the IV panel has not loaded it falls back to the manual IV input and says so. Below 0.95× reads "underpaid", above 1.05× "paid", otherwise "roughly fair". This is scenario context, not an observed variance risk premium.
+- **Not modelled:** spot purchase, margin, borrow, fees, and any USD yield you would earn elsewhere. The app does not trade.
+- **Browser access:** the panel needs Bybit to allow cross-origin requests from wherever the app is hosted, and some regions are blocked by Bybit. If the request fails the panel says so and the rest of the app is unaffected.
+
 ## Structure-aware payoff and Greeks
 
 The sandbox includes a model layer for the selected capital structure:

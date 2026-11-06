@@ -191,6 +191,85 @@ test('live strikes use the session entry price as anchor once the session is act
     ctx.state.live.entryPrice=79000;const bad=ctx.ivLivePlan(ctx.settings());assert(!bad.valid&&bad.reason.includes('expected sides'));
   });
 });
+const CARRY_NOW=Date.UTC(2026,10,5,9,48),H8=8*3600e3;
+const BYBIT=[['06NOV26',Date.UTC(2026,10,6),80384.9,80373.5,80419.5],['13NOV26',Date.UTC(2026,10,13),80574.4,80420.4,80688.6],['20NOV26',Date.UTC(2026,10,20),80655.8,80486.4,80772.5],['24SEP27',Date.UTC(2027,8,24),84342.7,84308.5,84376.9],['25DEC26',Date.UTC(2026,11,25),81049.99,80930.5,81142.8],['25JUN27',Date.UTC(2027,5,25),83220.1,83149.6,83275.1],['26MAR27',Date.UTC(2027,2,26),82158.7,82042.6,82257.2],['27NOV26',Date.UTC(2026,10,27),80748.3,80599.2,80870.6]];
+const bybitTickers=()=>BYBIT.map(([n,,m,b,a])=>({symbol:'BTCUSDT-'+n,markPrice:String(m),indexPrice:n==='25DEC26'?'80348.35':'80348.4',bid1Price:String(b),ask1Price:String(a),lastPrice:'1'})).concat([{symbol:'BTCUSDT',markPrice:'80343.3',indexPrice:'80348.33',fundingRate:'0.0001',nextFundingTime:'1793894400000'}]);
+const bybitInstruments=()=>BYBIT.map(([n,d])=>({symbol:'BTCUSDT-'+n,deliveryTime:String(d+H8),fundingInterval:0})).concat([{symbol:'BTCUSDT',deliveryTime:'0',fundingInterval:480}]);
+test('carry curve: basis, annualized carry at mark and bid, ordering and best contract from a real Bybit snapshot',()=>{
+  const c=ctx.carryCurve(bybitTickers(),bybitInstruments(),CARRY_NOW);
+  assert.deepEqual([...c.rows.map(r=>r.symbol)],['06NOV26','13NOV26','20NOV26','27NOV26','25DEC26','26MAR27','25JUN27','24SEP27'].map(x=>'BTCUSDT-'+x));
+  for(const r of c.rows){const [,d,m,b,a]=BYBIT.find(x=>'BTCUSDT-'+x[0]===r.symbol),idx=r.symbol.endsWith('25DEC26')?80348.35:80348.4,days=(d+H8-CARRY_NOW)/DAY;
+    near(r.days,days,1e-9);near(r.basis,(m-idx)/idx*100,1e-9);near(r.ann,(m-idx)/idx*100*365/days,1e-9);near(r.bidAnn,(b-idx)/idx*100*365/days,1e-9);near(r.spread,(a-b)/m*100,1e-9);assert.equal(r.noisy,days<2);}
+  assert.equal(c.rows.filter(r=>r.noisy).length,1);assert.equal(c.rows[0].symbol,'BTCUSDT-06NOV26');
+  const r13=c.rows[1];assert(Math.abs(r13.ann-12.97)<.05,'13NOV26 mark carry ~13%');assert(Math.abs(r13.bidAnn-4.1)<.1,'13NOV26 bid carry ~4%');
+  assert.equal(c.bestMark.symbol,'BTCUSDT-13NOV26');assert.equal(c.best.symbol,'BTCUSDT-24SEP27');near(c.best.bidAnn,5.57,.02);
+  assert(c.rows.slice(1).every(r=>r.bidAnn<=c.best.bidAnn));
+});
+test('carry curve skips bad rows and tolerates malformed input',()=>{
+  const ok=bybitTickers().find(t=>t.symbol==='BTCUSDT-13NOV26'),inst=bybitInstruments(),bad=[{...ok,symbol:'BTCUSDT-13NOV26',indexPrice:'0'},{...ok,symbol:'BTCUSDT-20NOV26',markPrice:'0'},{...ok,symbol:'BTCUSDT-27NOV26'},{...ok,symbol:'BTC-PERPETUAL'},{...ok,symbol:'BTCUSDT'},null,{}];
+  const wrongDelivery=inst.filter(i=>i.symbol!=='BTCUSDT-27NOV26').map(i=>i.symbol==='BTCUSDT-13NOV26'?{...i,deliveryTime:String(CARRY_NOW-1)}:i);
+  assert.equal(ctx.carryCurve(bad,wrongDelivery,CARRY_NOW).rows.length,0);
+  const one=ctx.carryCurve([{...ok,bid1Price:'',ask1Price:'80000'}],inst,CARRY_NOW);assert.equal(one.rows.length,1);assert(Number.isNaN(one.rows[0].bidAnn));assert(Number.isNaN(one.rows[0].spread));assert.equal(one.best,null);near(one.bestMark.ann,one.rows[0].ann);
+  const cross=ctx.carryCurve([{...ok,bid1Price:'80700',ask1Price:'80600'}],inst,CARRY_NOW).rows[0];assert(Number.isNaN(cross.spread));
+  for(const x of [null,undefined,'x',{}])assert.equal(ctx.carryCurve(x,x,CARRY_NOW).rows.length,0);
+  const onlyNoisy=ctx.carryCurve(bybitTickers().filter(t=>t.symbol==='BTCUSDT-06NOV26'),inst,CARRY_NOW);assert.equal(onlyNoisy.rows.length,1);assert.equal(onlyNoisy.best,null);assert.equal(onlyNoisy.bestMark,null);
+});
+test('carry funding annualizes by the perpetual interval and ignores missing readings',()=>{
+  const perp={fundingRate:'0.0001',nextFundingTime:'1793894400000'},hist=Array.from({length:21},(_,i)=>({fundingRate:i%2?'0.0002':'0'}));
+  let f=ctx.carryFunding(perp,hist,480);near(f.ann,.0001*3*365*100,1e-9);near(f.ann,10.95,1e-9);assert.equal(f.intervalMin,480);assert.equal(f.assumedInterval,false);assert.equal(f.n,21);near(f.avgAnn,(10*.0002/21)*3*365*100,1e-9);assert.equal(f.nextTs,1793894400000);
+  f=ctx.carryFunding(perp,hist,240);near(f.ann,.0001*6*365*100,1e-9);
+  f=ctx.carryFunding(perp,[],NaN);assert.equal(f.assumedInterval,true);assert.equal(f.intervalMin,480);assert.equal(f.n,0);assert(Number.isNaN(f.avgAnn));near(f.ann,10.95,1e-9);
+  f=ctx.carryFunding(null,[null,{},{fundingRate:null},{fundingRate:''},{fundingRate:'abc'},{fundingRate:'-0.0001'}],480);assert(Number.isNaN(f.ann));assert.equal(f.n,1);near(f.avgAnn,-10.95,1e-9);
+  assert(Number.isNaN(ctx.carryFunding({fundingRate:null},undefined,480).ann));
+});
+test('carry vol context compares Deribit ATM IV nearest 7 days with the HAR-like forecast',()=>{
+  seed();nodes.researchMode.value='friday0dte';ctx.syncControls();ctx.run();
+  const har=ctx.carryVol().har;assert(Number.isFinite(har));near(har,.30*ctx.recentRV(5)+.40*ctx.recentRV(20)+.30*ctx.recentRV(60),1e-9);
+  const ivRows=iv=>({rows:[{expiryTs:Date.UTC(2026,10,6,8),days:1,cells:{atm:{iv:.09}}},{expiryTs:Date.UTC(2026,10,12,8),days:7,cells:{atm:{iv}}},{expiryTs:Date.UTC(2026,11,25,8),days:50,cells:{atm:{iv:.9}}},{expiryTs:Date.UTC(2026,10,13,8),days:8,cells:{}}],asOf:CARRY_NOW,count:1,status:'LIVE',error:'',busy:false});
+  const curve=ctx.carryCurve(bybitTickers(),bybitInstruments(),CARRY_NOW),perp=bybitTickers().find(t=>t.symbol==='BTCUSDT');
+  ctx.state.carry={rows:curve.rows,best:curve.best,bestMark:curve.bestMark,funding:ctx.carryFunding(perp,[{fundingRate:'0.0001'}],480),asOf:CARRY_NOW,count:9,status:'LIVE',error:'',busy:false};
+  for(const [mult,word] of [[1.2,'Vol selling paid'],[.8,'Vol selling underpaid'],[1,'Vol selling roughly fair']]){
+    ctx.state.ivDelta=ivRows(har*mult/100);const v=ctx.carryVol();near(v.iv,har*mult,1e-9);near(v.ratio,mult,1e-9);assert(v.src.includes('Nov 12'),v.src);
+    ctx.renderCarry();assert(nodes.carryVerdict.textContent.includes(word+' vs forecast RV'),nodes.carryVerdict.textContent);assert(nodes.carryLines.innerHTML.includes(word+': IV/forecast-RV '+mult.toFixed(2)+'×'));}
+  ctx.state.ivDelta={rows:[],asOf:NaN,count:0,status:'NOT LOADED',error:'',busy:false};const manual=ctx.carryVol();assert.equal(manual.src,'manual IV input');near(manual.iv,ctx.settings().iv*100,1e-9);ctx.renderCarry();assert(nodes.carryVerdict.textContent.includes('× on manual IV)'),nodes.carryVerdict.textContent);ctx.state.ivDelta=ivRows(har/100);ctx.renderCarry();assert(!nodes.carryVerdict.textContent.includes('manual IV'));ctx.state.ivDelta={rows:[],asOf:NaN,count:0,status:'NOT LOADED',error:'',busy:false};
+  const daily=ctx.state.daily;ctx.state.daily=[];try{const none=ctx.carryVol();assert(Number.isNaN(none.har));assert(Number.isNaN(none.ratio));ctx.renderCarry();assert(nodes.carryLines.innerHTML.includes('Vol comparison unavailable'));assert(!nodes.carryVerdict.textContent.includes('Vol selling'));assert(!nodes.carryLines.innerHTML.includes('NaN'));}finally{ctx.state.daily=daily;}
+});
+test('carry panel renders the curve, best star, funding line and failure states',()=>{
+  const curve=ctx.carryCurve(bybitTickers(),bybitInstruments(),CARRY_NOW),perp=bybitTickers().find(t=>t.symbol==='BTCUSDT');
+  ctx.state.ivDelta={rows:[],asOf:NaN,count:0,status:'NOT LOADED',error:'',busy:false};
+  ctx.state.carry={rows:curve.rows,best:curve.best,bestMark:curve.bestMark,funding:ctx.carryFunding(perp,Array.from({length:21},()=>({fundingRate:'0.0001'})),480),asOf:CARRY_NOW,count:9,status:'LIVE',error:'',busy:false};ctx.renderCarry();
+  const body=nodes.carryBody.innerHTML,label=nodes.carryLabel.textContent;
+  assert(label.includes('LIVE')&&label.includes('8 CONTRACTS')&&label.includes('CONTANGO')&&label.includes('09:48:00 UTC'),label);
+  assert.equal((body.match(/<tr/g)||[]).length,8);assert.equal((body.match(/★ best/g)||[]).length,1);assert(body.indexOf('BTCUSDT-24SEP27 <span')>0);assert(body.includes('2026-11-13 (8d)'));assert(body.includes('opacity:.6'));assert(body.includes('+0.28%'));assert(!body.includes('NaN')&&!body.includes('undefined'));
+  assert(nodes.carryVerdict.textContent.includes('Best executable carry +5.6%/yr (BTCUSDT-24SEP27, 323d)'),nodes.carryVerdict.textContent);
+  const lines=nodes.carryLines.innerHTML;assert(lines.includes('+13.0%/yr at mark (BTCUSDT-13NOV26)'));assert(lines.includes('selling at the bid (BTCUSDT-24SEP27)'));assert(lines.includes('Perp funding +10.9%/yr now (0.0100% per 8h)'),lines);assert(lines.includes('average over the last 21 periods'));assert(!lines.includes('NaN')&&!lines.includes('undefined'));
+  const back=curve.rows.map(r=>({...r,basis:-1}));ctx.state.carry.rows=back;ctx.renderCarry();assert(nodes.carryLabel.textContent.includes('BACKWARDATION'));ctx.state.carry.rows=curve.rows.map((r,i)=>({...r,basis:i?1:-1}));ctx.renderCarry();assert(nodes.carryLabel.textContent.includes('MIXED CURVE'));
+  ctx.state.carry={rows:[],best:null,funding:null,asOf:NaN,count:0,status:'FAILED',error:'<b>HTTP 403</b>',busy:false};ctx.renderCarry();assert(nodes.carryBody.innerHTML.includes('Could not load the Bybit futures curve'));assert(!nodes.carryBody.innerHTML.includes('<b>HTTP'));assert.equal(nodes.carryVerdict.textContent,'');assert.equal(nodes.carryLines.innerHTML,'');
+  for(const [status,text] of [['NOT LOADED','No futures curve loaded'],['LOADING','Loading Bybit futures curve'],['EMPTY','no usable dated BTCUSDT futures']]){ctx.state.carry.status=status;ctx.renderCarry();assert(nodes.carryBody.innerHTML.includes(text),status);}
+  const none=ctx.carryCurve(bybitTickers().filter(t=>t.symbol==='BTCUSDT-06NOV26'),bybitInstruments(),CARRY_NOW);ctx.state.carry={rows:none.rows,best:none.best,bestMark:none.bestMark,funding:null,asOf:CARRY_NOW,count:1,status:'LIVE',error:'',busy:false};ctx.renderCarry();assert(nodes.carryVerdict.textContent.includes('No executable carry quote'));assert(!nodes.carryBody.innerHTML.includes('★'));assert(!nodes.carryLines.innerHTML.includes('Perp funding'));
+});
+test('carry panel exists with hover help and never alters historical records',()=>{
+  assert(html.includes('id="carryPanel"'));assert(html.includes('02D / CARRY MONITOR'));assert(ctx.HELP_TEXT['CARRY MONITOR']);
+  seed();nodes.researchMode.value='friday0dte';nodes.regime.value='all';ctx.syncControls();ctx.run();const before=JSON.stringify(ctx.state.records.map(r=>[r.lo,r.hi,r.inside]));ctx.state.carry={rows:[],best:null,funding:null,asOf:NaN,count:0,status:'NOT LOADED',error:'',busy:false};ctx.renderCarry();ctx.run();assert.equal(JSON.stringify(ctx.state.records.map(r=>[r.lo,r.hi,r.inside])),before);
+});
+(async()=>{
+  await new Promise(r=>setImmediate(r));
+  const origFetch=ctx.fetch,realNow=Date.now(),urls=[],mode={hist:'ok',code:0,http:200};
+  const dated=(n,days,mark,bid,ask)=>({t:{symbol:'BTCUSDT-'+n,markPrice:String(mark),indexPrice:'80000',bid1Price:String(bid),ask1Price:String(ask)},i:{symbol:'BTCUSDT-'+n,deliveryTime:String(Math.round(realNow+days*DAY)),fundingInterval:0}}),a=dated('10DEC26',10,80100,80050,80150),b=dated('20JAN27',40,80500,80450,80550);
+  ctx.fetch=async url=>{urls.push(url);if(mode.http!==200)return{ok:false,status:mode.http,json:async()=>({})};if(url.includes('funding/history')&&mode.hist==='fail')throw Error('history down');
+    const list=url.includes('tickers')?[a.t,b.t,{symbol:'BTCUSDT',markPrice:'80000',indexPrice:'80000',fundingRate:'0.0001',nextFundingTime:String(realNow+3600e3)}]:url.includes('instruments-info')?[a.i,b.i,{symbol:'BTCUSDT',deliveryTime:'0',fundingInterval:480}]:Array.from({length:21},()=>({fundingRate:'0.0001'}));
+    return{ok:true,status:200,json:async()=>({retCode:mode.code,result:{list}})};};
+  try{
+    ctx.state.carry=undefined;await ctx.loadCarry();let st=ctx.state.carry;
+    assert.equal(st.status,'LIVE');assert.equal(st.rows.length,2);assert.equal(st.busy,false);assert.equal(st.funding.intervalMin,480);assert.equal(st.funding.assumedInterval,false);near(st.funding.ann,10.95,1e-9);assert.equal(st.funding.n,21);assert(urls.length===3&&urls.every(u=>u.startsWith('https://api.bybit.com/v5/market/')));
+    near(st.rows[0].basis,.125,1e-9);assert.equal(st.best.symbol,'BTCUSDT-20JAN27');assert(nodes.carryLabel.textContent.includes('LIVE'));assert(nodes.carryLabel.textContent.includes('2 CONTRACTS'));
+    mode.hist='fail';await ctx.loadCarry();st=ctx.state.carry;assert.equal(st.status,'LIVE');assert.equal(st.funding.n,0);assert(Number.isNaN(st.funding.avgAnn));near(st.funding.ann,10.95,1e-9);
+    mode.hist='ok';mode.code=10001;await ctx.loadCarry();st=ctx.state.carry;assert.equal(st.status,'FAILED');assert(st.error.includes('unexpected response'));assert.equal(st.busy,false);assert.equal(st.rows.length,2);assert(nodes.carryLabel.textContent.includes('FAILED'));
+    mode.code=0;mode.http=403;await ctx.loadCarry();st=ctx.state.carry;assert.equal(st.status,'FAILED');assert(st.error.includes('HTTP 403'));
+    ctx.fetch=origFetch;await ctx.loadCarry();st=ctx.state.carry;assert.equal(st.status,'FAILED');assert(st.error.includes('offline test'));assert.equal(st.busy,false);
+    count++;console.log('PASS carry monitor loads from Bybit, survives a funding-history failure and reports errors without throwing');
+  }catch(e){console.error(e);process.exitCode=1;}finally{ctx.fetch=origFetch;}
+})();
 (async()=>{ctx.state.ivDelta.busy=false;await ctx.loadIvDelta();assert.equal(ctx.state.ivDelta.status,'FAILED');assert(ctx.state.ivDelta.error.includes('offline test'));assert.equal(ctx.state.ivDelta.busy,false);count++;console.log('PASS IV by delta load failure is reported without throwing');})();
 console.log(`${count} regression groups passed`);
 module.exports={ctx,nodes,seed};

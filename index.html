@@ -186,6 +186,17 @@ button:disabled{opacity:.5;cursor:not-allowed}#themeBtn{min-width:40px;min-heigh
     </div>
   </section>
 
+  <section class="panel" id="carryPanel">
+    <div class="panel-head"><span class="panel-title">02D / CARRY MONITOR</span><div class="flexhead"><span class="tiny" id="carryLabel">BYBIT PUBLIC · NOT LOADED</span><button class="iconbtn" id="carryRefresh" type="button">REFRESH</button></div></div>
+    <div class="panel-body">
+      <div class="tiny">Which engine is paying?</div>
+      <div id="carryVerdict" style="margin:6px 0 10px;font-size:14px;font-weight:700"></div>
+      <div class="table-wrap" style="max-height:none"><table class="data-table compact" id="carryTable"><thead><tr><th style="text-align:left">CONTRACT</th><th>EXPIRY</th><th>MARK</th><th>BASIS</th><th>ANN. (MARK)</th><th>SELL AT BID</th><th>SPREAD</th></tr></thead><tbody id="carryBody"><tr><td colspan="7" class="tiny">Loading Bybit futures curve…</td></tr></tbody></table></div>
+      <div id="carryLines" class="tiny" style="margin-top:10px;line-height:1.7"></div>
+      <div class="model-note" id="carryNote" style="margin-top:10px"></div>
+    </div>
+  </section>
+
   <div class="split">
     <section class="panel">
       <div class="panel-head"><span class="panel-title">03 / EXPIRY RETURN DISTRIBUTION</span><div class="flexhead"><select class="select-mini" id="distView"><option value="hist">HISTOGRAM</option><option value="ecdf">ECDF</option><option value="qq">NORMAL Q-Q</option></select><div class="legend"><span><i class="dot actual"></i>EMPIRICAL</span><span><i class="dot normal"></i>NORMAL</span></div></div></div>
@@ -596,6 +607,7 @@ const HELP_TEXT={
   'TEST SPECIFICATION':'All assumptions for the active study. Changing a control rebuilds the sample, range, validation tests, scenario accounting, and report.',
   'FRIDAY 0DTE DESK':'Session summary: timing, sample size, empirical ranges, strike prices, model-IV move, and sensitivity to the hourly settlement proxy.',
   'IV BY DELTA':'Live Deribit mark IV at fixed deltas (−20, −35, ATM, +35, +20) for every listed expiry. Delta is computed here from each expiry’s forward; it is a current snapshot. Nothing changes until you click Apply, which fixes the live strikes and bid credit as the range for the historical research.',
+  'CARRY MONITOR':'Live Bybit dated BTCUSDT futures vs the index: basis, simple annualized carry at mark and at the best bid, and perp funding next to it, with Deribit ATM IV vs the HAR-like RV forecast for context. A snapshot for analysis only; it does not change any historical result.',
   'LIVE SESSION MONITOR':'Current-market context only. Live BTC updates strikes, countdowns, payoff markers, and Greeks; it never rewrites historical results.',
   'EXPIRY RETURN DISTRIBUTION':'Observed entry-to-expiry BTC returns shown as a histogram, empirical CDF, or normal Q-Q plot.',
   'DESCRIPTIVES + DIAGNOSTICS':'Summary statistics, tail-shape tests, confidence intervals, and lag-1 dependence for the currently matched return sample.',
@@ -985,7 +997,7 @@ function bindAuditLabels(){document.querySelectorAll('.field').forEach(f=>{const
 function run(){
   if(!state.daily.length)return;const invalid=[...document.querySelectorAll('#researchView input[type=number]:not(:disabled)')].find(el=>!el.checkValidity());if(invalid){$('researchState').textContent='Invalid input: '+(invalid.closest('.field')?.querySelector('label')?.textContent||invalid.id)+'. Previous results retained.';invalid.reportValidity();return;}const s=settings();if(!(s.manualLo>-100&&s.manualHi>=0&&s.manualLo<=0)){$('researchState').textContent='Distances must give positive, ordered strikes.';return;}state.baseAll=makeBase(s,false);state.baseEval=makeBase(s,true);state.range=chooseRange(s,state.baseEval);state.records=applyRange(state.baseEval,state.range.lo,state.range.hi,true);state.wf=walkForward(s);state.cal=calibrationSeries(s);renderExplorer(s);renderAll(s);renderDataQuality(s);
 }
-function renderAll(s){renderKPIs(s);renderZeroDteDesk(s);renderLivePanel(s);renderDistribution(s);renderStats(s);renderRisk(s);renderUnderwriting(s);renderWalkForward(s);renderCalibration();renderRolling();renderVol();renderHeatmap(s);renderDOW(s);renderHorizonSurface(s);renderSessionSensitivity(s);renderWeekendBenchmark(s);renderRequiredRangeLadder(s);renderRobustnessHoldout(s);renderCases(s);renderCasePerformance(s);renderModel(s);renderPayoff(s);renderOverlap(s);renderReport(s);renderIvApply(s);}
+function renderAll(s){renderKPIs(s);renderZeroDteDesk(s);renderLivePanel(s);renderDistribution(s);renderStats(s);renderRisk(s);renderUnderwriting(s);renderWalkForward(s);renderCalibration();renderRolling();renderVol();renderHeatmap(s);renderDOW(s);renderHorizonSurface(s);renderSessionSensitivity(s);renderWeekendBenchmark(s);renderRequiredRangeLadder(s);renderRobustnessHoldout(s);renderCases(s);renderCasePerformance(s);renderModel(s);renderPayoff(s);renderOverlap(s);renderReport(s);renderIvApply(s);renderCarry();}
 function renderKPIs(s){const a=state.records,n=a.length,wins=a.filter(x=>x.inside).length,nt=a.filter(x=>x.noTouch).length,rec=a.filter(x=>x.recovered).length,lo=a.filter(x=>x.lower).length,hi=a.filter(x=>x.upper).length,st=summarize(a),neff=effectiveN(a.map(x=>x.inside));$('kWin').textContent=n?fmtRate(wins/n):'—';$('kNoTouch').textContent=n?fmtRate(nt/n):'—';$('kRecovered').textContent=n?fmtRate(rec/n):'—';$('kBreach').textContent=n?`${fmtRate(lo/n)} / ${fmtRate(hi/n)}`:'—';$('kN').textContent=n?`${Math.round(neff)} / ${n}`:'—';$('kSigma').textContent=Number.isFinite(st.sd)?st.sd.toFixed(2)+'%':'—';$('kTouchFoot').textContent=s.mode==='multi'?(state.intraday.length?state.pathLabel+'; daily fallback':'daily observations'):'hourly-close path proxy';$('kPeriod').textContent=n?`${date(a[0].entryTs)} → ${date(a.at(-1).entryTs)}`:'no observations';$('kWinFoot').textContent=s.strategy==='strangle'?'expiry inside strike range':'expiry inside assumed BE band';$('lowerViz').textContent=fmtPct(state.range.lo,1);$('upperViz').textContent=fmtPct(state.range.hi,1);$('rangeSource').textContent=state.range.source;$('lowerPct').disabled=s.strategy==='strangle'&&s.rangeMethod!=='manual';$('upperPct').disabled=s.strategy==='strangle'&&s.rangeMethod!=='manual';}
 function recentRV(days){return rollingRVAt(state.daily.length-1,days);}
 function jbTest(st){if(!st.n||!Number.isFinite(st.skew)||!Number.isFinite(st.kurt))return{jb:NaN,p:NaN};const jb=st.n/6*(st.skew**2+st.kurt**2/4);return{jb,p:Math.exp(-jb/2)};}
@@ -1493,7 +1505,7 @@ function renderIvDelta(){
   $('ivDeltaLabel').textContent='DERIBIT PUBLIC CHAIN · '+st.status+when+n;
   $('ivDeltaBody').innerHTML=st.rows.length?st.rows.map(r=>{const c=r.cells,sk=r.skew,skew=Number.isFinite(sk)?`<td class="iv-skew" style="color:var(${sk<0?'--purple':'--cyan'})">${sk<0?'−':'+'}${Math.abs(sk).toFixed(2)}</td>`:'<td class="iv-skew">—</td>';return`<tr><td class="iv-exp">${new Date(r.expiryTs).toLocaleDateString('en-US',{month:'short',day:'numeric',timeZone:'UTC'})}<small>${r.days}d</small></td>${cell(c.p20)}${cell(c.p35)}${cell(c.atm,true)}${cell(c.c35)}${cell(c.c20)}${skew}</tr>`;}).join(''):`<tr><td colspan="7" class="tiny">${st.status==='FAILED'?'Could not load the Deribit chain'+(st.error?' ('+st.error.replace(/[<>&]/g,'')+')':'')+'. The browser may be blocking the request; use Refresh to retry.':st.status==='LOADING'?'Loading Deribit option chain…':'No option chain loaded.'}</td></tr>`;
   $('ivDeltaNote').innerHTML='<b>Method:</b> mark IV from Deribit’s public book summary at the listed strike nearest each target delta (within ±0.15Δ, otherwise —). Delta is computed here with Black–76 using each expiry’s own forward and r = 0, not read from the exchange. ATM is the strike nearest the forward (call and put IV averaged). SKEW = Δ−20 put IV minus Δ+20 call IV, in vol points. Dimmed cells have no bid. Mark IV is not an executable price. This is a current snapshot only: it is not part of the historical sample, and no range or result changes until you click Apply below.';
-  renderIvApply(settings());
+  renderIvApply(settings());renderCarry();
 }
 function ivLivePlan(s){
   const st=ivState(),ctx=sessionContext(s),target=Number($('ivApplyDelta').value)===35?35:20,csp=s.capitalMode==='csp',none=reason=>({valid:false,reason,target});
@@ -1547,7 +1559,65 @@ async function loadIvDelta(){
   finally{st.busy=false;renderIvDelta();}
 }
 function initIvDelta(){$('ivDeltaRefresh').addEventListener('click',loadIvDelta);$('applyLiveStrikes').addEventListener('click',applyLiveStrikes);$('ivApplyDelta').addEventListener('change',()=>renderIvApply(settings()));renderIvDelta();loadIvDelta();setInterval(()=>{if(!document.hidden)loadIvDelta();},120000);}
-let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>state.daily.length&&renderAll(settings()),120);});bindAuditLabels();initGuide();initCasePerformance();initExperiments();initObjectiveQuotes();initIvDelta();syncControls();loadData().then(()=>refreshEntryContext());fetchLiveREST();connectLivePrice();setInterval(()=>{if(!Number.isFinite(state.live.price)||Date.now()-state.live.ts>30000)fetchLiveREST();if(state.daily.length)renderLivePanel(settings());},10000);
+const CARRY_API='https://api.bybit.com/v5/market/';
+const CARRY_SYMBOL=/^BTCUSDT-\d{1,2}[A-Z]{3}\d{2}$/;
+function carryState(){return state.carry||(state.carry={rows:[],best:null,funding:null,asOf:NaN,count:0,status:'NOT LOADED',error:'',busy:false});}
+function carryCurve(tickers,instruments,now){
+  const delivery=new Map();
+  for(const i of Array.isArray(instruments)?instruments:[])if(i&&CARRY_SYMBOL.test(String(i.symbol))&&Number(i.deliveryTime)>0)delivery.set(i.symbol,Number(i.deliveryTime));
+  const rows=[];
+  for(const t of Array.isArray(tickers)?tickers:[]){
+    if(!t||!delivery.has(t.symbol))continue;
+    const expiryTs=delivery.get(t.symbol),days=(expiryTs-now)/DAY,index=Number(t.indexPrice),mark=Number(t.markPrice),bid=Number(t.bid1Price),ask=Number(t.ask1Price);
+    if(!(days>0)||!(index>0)||!(mark>0))continue;
+    const basis=(mark/index-1)*100,hasBid=bid>0;
+    rows.push({symbol:t.symbol,expiryTs,days,index,mark,bid:hasBid?bid:NaN,ask:ask>0?ask:NaN,basis,ann:basis*365/days,bidBasis:hasBid?(bid/index-1)*100:NaN,bidAnn:hasBid?(bid/index-1)*100*365/days:NaN,spread:hasBid&&ask>bid?(ask-bid)/mark*100:NaN,noisy:days<2});
+  }
+  rows.sort((a,b)=>a.expiryTs-b.expiryTs);
+  const usable=rows.filter(r=>!r.noisy),pickMax=key=>{const c=usable.filter(r=>Number.isFinite(r[key]));return c.length?c.reduce((b,r)=>r[key]>b[key]?r:b):null;};
+  return{rows,best:pickMax('bidAnn'),bestMark:pickMax('ann')};
+}
+function carryFunding(perp,history,intervalMin){
+  const known=Number(intervalMin)>0,mins=known?Number(intervalMin):480,perYear=1440*365/mins,has=x=>x&&x.fundingRate!==null&&x.fundingRate!==undefined&&x.fundingRate!=='',
+    rate=has(perp)?Number(perp.fundingRate):NaN,h=(Array.isArray(history)?history:[]).filter(has).map(x=>Number(x.fundingRate)).filter(Number.isFinite);
+  return{intervalMin:mins,assumedInterval:!known,rate,ann:Number.isFinite(rate)?rate*perYear*100:NaN,n:h.length,avgAnn:h.length?mean(h)*perYear*100:NaN,nextTs:has(perp)?Number(perp.nextFundingTime):NaN};
+}
+function carryVol(){
+  const rv5=recentRV(5),rv20=recentRV(20),rv60=recentRV(60),har=[rv5,rv20,rv60].every(Number.isFinite)?.30*rv5+.40*rv20+.30*rv60:NaN,cand=ivState().rows.filter(r=>r.cells&&r.cells.atm&&r.days>=2);
+  let iv=NaN,src='';
+  if(cand.length){const r=cand.reduce((b,x)=>Math.abs(x.days-7)<Math.abs(b.days-7)?x:b);iv=r.cells.atm.iv*100;src='Deribit ATM mark IV, '+new Date(r.expiryTs).toLocaleDateString('en-US',{month:'short',day:'numeric',timeZone:'UTC'})+' expiry';}
+  else{const m=settings().iv*100;if(m>0){iv=m;src='manual IV input';}}
+  return{iv,har,ratio:iv/har,pts:iv-har,src};
+}
+function renderCarry(){
+  const st=carryState(),vol=carryVol(),f=st.funding,best=st.best,bm=st.bestMark,sg=(x,d=1)=>Number.isFinite(x)?(x<0?'−':'+')+Math.abs(x).toFixed(d)+'%':'—',col=x=>Number.isFinite(x)?`color:var(${x<0?'--bad':'--good'})`:'',
+    shape=!st.rows.length?'':st.rows.every(r=>r.basis>0)?'CONTANGO':st.rows.every(r=>r.basis<0)?'BACKWARDATION':'MIXED CURVE';
+  $('carryLabel').textContent='BYBIT PUBLIC · '+st.status+(Number.isFinite(st.asOf)?' · '+new Date(st.asOf).toISOString().slice(11,19)+' UTC':'')+(st.rows.length?' · '+st.rows.length+' CONTRACTS · '+shape:'');
+  $('carryBody').innerHTML=st.rows.length?st.rows.map(r=>`<tr${r.noisy?' style="opacity:.6" title="Under 2 days to expiry: annualizing a tiny basis is noise, so it is excluded from best"':''}><td style="text-align:left">${r.symbol}${best&&best.symbol===r.symbol?' <span style="color:var(--warn)">★ best</span>':''}</td><td>${new Date(r.expiryTs).toISOString().slice(0,10)} (${Math.ceil(r.days)}d)</td><td>${fmtUSD(r.mark)}</td><td style="${col(r.basis)}">${sg(r.basis,2)}</td><td style="${col(r.ann)}">${sg(r.ann)}/yr</td><td style="${col(r.bidAnn)}">${Number.isFinite(r.bidAnn)?sg(r.bidAnn)+'/yr':'NO BID'}</td><td>${Number.isFinite(r.spread)?r.spread.toFixed(2)+'%':'—'}</td></tr>`).join(''):`<tr><td colspan="7" class="tiny">${st.status==='FAILED'?'Could not load the Bybit futures curve'+(st.error?' ('+st.error.replace(/[<>&]/g,'')+')':'')+'. The browser may be blocking the request; use Refresh to retry.':st.status==='LOADING'?'Loading Bybit futures curve…':st.status==='EMPTY'?'Bybit returned no usable dated BTCUSDT futures.':'No futures curve loaded.'}</td></tr>`;
+  const volWord=!Number.isFinite(vol.ratio)?'':vol.ratio<.95?'Vol selling underpaid':vol.ratio>1.05?'Vol selling paid':'Vol selling roughly fair',parts=[];
+  if(st.rows.length){parts.push(best?'Best executable carry '+sg(best.bidAnn)+'/yr ('+best.symbol+', '+Math.ceil(best.days)+'d)':'No executable carry quote');if(volWord)parts.push(volWord+' vs forecast RV ('+vol.ratio.toFixed(2)+'×'+(vol.src==='manual IV input'?' on manual IV':'')+')');}
+  $('carryVerdict').textContent=parts.join(' · ');
+  const lines=[];
+  if(st.rows.length){
+    lines.push('Cash-and-carry (buy spot, sell the dated future, hold to delivery): '+(bm?sg(bm.ann)+'/yr at mark ('+bm.symbol+')':'no mark basis')+'; '+(best?sg(best.bidAnn)+'/yr selling at the bid ('+best.symbol+')':'no bid')+'. Bid-based figures still exclude buying spot at the ask and all fees. Basis is locked at entry.');
+    lines.push(Number.isFinite(vol.ratio)?volWord+': IV/forecast-RV '+vol.ratio.toFixed(2)+'× ('+(vol.pts<0?'−':'+')+Math.abs(vol.pts).toFixed(1)+' pts) — '+vol.src+' '+vol.iv.toFixed(1)+'% vs HAR-like RV forecast '+vol.har.toFixed(1)+'%. Scenario context, not an observed variance risk premium.':'Vol comparison unavailable: it needs the price history plus the IV panel or a manual IV.');
+    if(f&&Number.isFinite(f.ann))lines.push('Perp funding '+sg(f.ann)+'/yr now ('+(f.rate*100).toFixed(4)+'% per '+(f.intervalMin/60)+'h'+(f.assumedInterval?', interval assumed':'')+')'+(Number.isFinite(f.avgAnn)?', '+sg(f.avgAnn)+'/yr average over the last '+f.n+' periods':'')+(best?' vs '+sg(best.bidAnn)+'/yr dated at the bid':'')+'. The dated future locks its rate to delivery; funding floats each interval and can turn negative.');
+  }
+  $('carryLines').innerHTML=lines.map(x=>'<div>• '+x+'</div>').join('');
+  $('carryNote').innerHTML='<b>Method:</b> Bybit USDT-margined BTC futures. BASIS = mark ÷ index − 1. ANN. = basis × 365 ÷ days to delivery (simple, not compounded). SELL AT BID uses the best bid instead of mark. SPREAD = (ask − bid) ÷ mark. Contracts under 2 days are dimmed and excluded from best. Vol comparison uses the Deribit ATM IV nearest 7 days (manual IV if the IV panel is not loaded) against the HAR-like RV forecast. Live snapshot only, not stored. Analysis only: this app does not trade, and carry needs spot, margin and fees that are not modelled here.';
+}
+async function loadCarry(){
+  const st=carryState();if(st.busy)return;st.busy=true;st.status='LOADING';renderCarry();
+  const get=async path=>{const r=await fetch(CARRY_API+path,{cache:'no-store',signal:AbortSignal.timeout(15000)});if(!r.ok)throw new Error('HTTP '+r.status);const j=await r.json();if(!j||j.retCode!==0||!j.result||!Array.isArray(j.result.list))throw new Error('unexpected response');return j.result.list;};
+  try{
+    const [tickers,instruments,history]=await Promise.all([get('tickers?category=linear'),get('instruments-info?category=linear&baseCoin=BTC&limit=200'),get('funding/history?category=linear&symbol=BTCUSDT&limit=21').catch(()=>[])]);
+    const asOf=Date.now(),curve=carryCurve(tickers,instruments,asOf),perp=tickers.find(x=>x&&x.symbol==='BTCUSDT'),info=instruments.find(x=>x&&x.symbol==='BTCUSDT');
+    st.rows=curve.rows;st.best=curve.best;st.bestMark=curve.bestMark;st.funding=perp?carryFunding(perp,history,Number(info&&info.fundingInterval)):null;st.asOf=asOf;st.count=tickers.length;st.status=curve.rows.length?'LIVE':'EMPTY';st.error='';
+  }catch(e){st.status='FAILED';st.error=String(e&&e.message||e).slice(0,120);}
+  finally{st.busy=false;renderCarry();}
+}
+function initCarry(){$('carryRefresh').addEventListener('click',loadCarry);renderCarry();loadCarry();setInterval(()=>{if(!document.hidden)loadCarry();},120000);}
+let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>state.daily.length&&renderAll(settings()),120);});bindAuditLabels();initGuide();initCasePerformance();initExperiments();initObjectiveQuotes();initIvDelta();initCarry();syncControls();loadData().then(()=>refreshEntryContext());fetchLiveREST();connectLivePrice();setInterval(()=>{if(!Number.isFinite(state.live.price)||Date.now()-state.live.ts>30000)fetchLiveREST();if(state.daily.length)renderLivePanel(settings());},10000);
 })();
 </script>
 </body>
