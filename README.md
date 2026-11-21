@@ -23,7 +23,9 @@ See [AUDIT.md](AUDIT.md) for verified findings, fixes, tests, and remaining limi
 
 - **Entry desk:** choose a containment target (80%, 85%, 90%, 95%), manual delta targets, or a quote-based return candidate. Selected estimates do not change the applied fixed range until **Apply** is clicked.
 - **Historical data quality:** completed bars only; daily and intraday timestamps are bucket starts. Missing or unaligned session buckets are excluded. The status strip reports coverage, age, and gaps.
-- **Historical delta:** pre-entry 30-day realized volatility by default, or manual IV. These are model estimates. Short-position delta appears first.
+- **Historical delta:** pre-entry 30-day realized volatility by default (optionally scaled by an IV ÷ RV scenario multiplier), manual IV, or Deribit's DVOL index from March 2021. These are model estimates. Short-position delta appears first.
+- **Holdout discipline:** lock the intended settings before viewing holdout results; the status line shows whether the lock still matches and how many setups were viewed this session.
+- **Intervals:** containment intervals use an overlap-adjusted effective sample size, and moving-block length is at least the overlap factor.
 - **Quote comparison:** import normalized USD-linear per-BTC executable entry bids and costs using the schema in the desk. The top-level `pricingBasis` must be `executable-bid`; marks and unspecified pricing are rejected. Costs must cover applicable entry and expiry/close fees plus estimated slippage. Training ranks policies; a separate validation period must also show positive mean return and pass the specified worst-5% mean loss limit. The latest chronological holdout evaluates selections. Sample minimums: 30 training, 10 validation, 10 holdout.
 - **Return attribution:** quoted results separate option return, BTC holding return, and their combined return on declared capital. They are per-trade returns, not APR. Loss thresholds are user assumptions, not recommended risk budgets.
 - **Research notebook:** snapshots remain local to this browser; imported quotes are in memory only. Restoring settings recalculates against the current loaded data.
@@ -156,7 +158,7 @@ A result that changes dramatically after a tiny parameter adjustment should be t
 
 Friday entry-time comparisons are paired by common expiry. The difference in containment is reported with a Newey-West heteroskedasticity-and-autocorrelation-consistent 95% interval rather than treating nearby rules as independent samples.
 
-The containment bootstrap uses 5,000 resamples. Circular moving-block resampling is the default so short-run dependence is retained; IID resampling remains available as a comparison.
+The containment bootstrap uses 5,000 resamples. Circular moving-block resampling is the default so short-run dependence is retained; IID resampling remains available as a comparison. When trades overlap, the block length is raised to the overlap factor. If every session has the same outcome, the Wilson interval is shown instead of a zero-width bootstrap interval.
 
 ## Underwriting and declared capital
 
@@ -366,7 +368,9 @@ The app looks for:
 - `btc_1h_price.json`
 - `btc_4h_price.json`
 
-It first supports local copies and then falls back to remote GitHub/jsDelivr sources.
+It first supports local copies and then falls back to remote GitHub/jsDelivr sources. After loading, the most recent completed daily and intraday closes are cross-checked against Binance; a gap above 2% marks the data unverified.
+
+The page ships a Content-Security-Policy that pins the inline script by SHA-256. After editing the script, run `node tests/update-csp.cjs`; the regression suite fails if the hash is stale.
 
 Because dates and sample sizes are discovered dynamically, future BTC observations can be added without changing the HTML itself. New completed sessions automatically become part of the statistical sample when the underlying JSON data updates.
 
