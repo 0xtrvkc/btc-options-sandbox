@@ -5,7 +5,7 @@ const nodes={};const canvas=new Proxy({measureText:()=>({width:40})},{get:(o,k)=
 for(const id of ids)nodes[id]={id,value:'',innerHTML:'',textContent:'',style:{},dataset:{},classList:{add(){},remove(){},toggle(){}},addEventListener(){},setAttribute(){},removeAttribute(){},hasAttribute(){return false;},querySelectorAll(){return[];},querySelector(){return null;},checkValidity(){return true;},reportValidity(){return true;},getBoundingClientRect(){return{width:600,height:315};},getContext(){return canvas;}};
 for(const m of html.matchAll(/<input\b([^>]+)>/g)){const id=m[1].match(/\bid="([^"]+)"/)?.[1],v=m[1].match(/\bvalue="([^"]*)"/)?.[1];if(id)nodes[id].value=v||'';}
 for(const m of html.matchAll(/<select\b[^>]*\bid="([^"]+)"[^>]*>([\s\S]*?)<\/select>/g)){const opts=[...m[2].matchAll(/<option\b([^>]*)>/g)],pick=opts.find(x=>/selected/.test(x[1]))||opts[0];nodes[m[1]].value=pick?.[1].match(/value="([^"]+)"/)?.[1]||'';}
-let stored={};const ctx={console,Date,Math,Number,Map,Set,WeakMap,JSON,String,Array,Intl,AbortSignal,performance,URL,document:{getElementById:id=>{assert(nodes[id],'missing ID '+id);return nodes[id];},querySelectorAll:()=>[],documentElement:{dataset:{}}},window:{devicePixelRatio:1,addEventListener(){},innerWidth:1280,innerHeight:900},getComputedStyle:()=>({getPropertyValue:()=> '#aaa'}),localStorage:{getItem:k=>stored[k],setItem:(k,v)=>stored[k]=v},setTimeout:()=>0,clearTimeout(){},setInterval:()=>0,fetch:async()=>{throw Error('offline test');}};
+let stored={};const ctx={console,Date,Math,Number,Map,Set,WeakMap,JSON,String,Array,Intl,AbortSignal,performance,URL,document:{getElementById:id=>{assert(nodes[id],'missing ID '+id);return nodes[id];},querySelectorAll:()=>[],documentElement:{dataset:{}}},window:{devicePixelRatio:1,addEventListener(){},innerWidth:1280,innerHeight:900},getComputedStyle:()=>({getPropertyValue:()=> '#aaa'}),localStorage:{getItem:k=>stored[k],setItem:(k,v)=>stored[k]=v,removeItem:k=>{delete stored[k];}},setTimeout:()=>0,clearTimeout(){},setInterval:()=>0,fetch:async()=>{throw Error('offline test');}};
 vm.createContext(ctx);const names=[...script.matchAll(/(?:async )?function (\w+)\(/g)].map(x=>x[1]);const tail=script.indexOf('let rt;window.addEventListener');assert(tail>0);vm.runInContext(script.slice(0,tail)+'Object.assign(globalThis,{state,HELP_TEXT,'+names.join(',')+'});})();',ctx);
 const DAY=86400000,HOUR=3600000;let count=0;function test(name,fn){fn();count++;console.log('PASS',name);}function near(a,b,t=1e-8){assert(Math.abs(a-b)<t,`${a} ≈ ${b}`);}
 function seed(){ctx.state.daily=Array.from({length:900},(_,i)=>({ts:Date.UTC(2022,0,1)+i*DAY,close:100000*Math.exp(.02*Math.sin(i/7)+.0001*i),low:100000*Math.exp(.02*Math.sin(i/7)+.0001*i),high:100000*Math.exp(.02*Math.sin(i/7)+.0001*i)}));ctx.state.intraday=[];for(const d of ctx.state.daily)for(let h=0;h<24;h+=4)ctx.state.intraday.push({ts:d.ts+h*HOUR,close:d.close,high:d.close,low:d.close});ctx.state.intradayHours=4;ctx.state.latest=ctx.state.daily.at(-1);ctx.state.latestIntraday=ctx.state.intraday.at(-1);ctx.computeFeatures();}
@@ -256,6 +256,62 @@ test('carry panel renders the curve, best star, funding line and failure states'
 test('carry panel exists with hover help and never alters historical records',()=>{
   assert(html.includes('id="carryPanel"'));assert(html.includes('02D / CARRY MONITOR'));assert(ctx.HELP_TEXT['CARRY MONITOR']);
   seed();nodes.researchMode.value='friday0dte';nodes.regime.value='all';ctx.syncControls();ctx.run();const before=JSON.stringify(ctx.state.records.map(r=>[r.lo,r.hi,r.inside]));ctx.state.carry={rows:[],best:null,funding:null,asOf:NaN,count:0,status:'NOT LOADED',error:'',busy:false};ctx.renderCarry();ctx.run();assert.equal(JSON.stringify(ctx.state.records.map(r=>[r.lo,r.hi,r.inside])),before);
+});
+test('overlap factor and effective N shrink the sample only when trades overlap',()=>{
+  const flat=Array.from({length:40},(_,i)=>({entryTs:i*7*DAY,expiryTs:i*7*DAY+8*HOUR})),wide=flat.map(x=>({...x,expiryTs:x.entryTs+28*DAY}));
+  assert.equal(ctx.overlapFactor(flat),1);assert.equal(ctx.overlapFactor(wide),4);
+  const hits=Array.from({length:40},(_,i)=>i%5!==0),rho=ctx.autocorr(hits.map(v=>v?1:0));near(ctx.effectiveN(hits,1),Math.max(1,Math.min(40,40*(1-rho)/(1+rho))));
+  assert(ctx.effectiveN(hits,4)<=10+1e-9);const [a,b]=ctx.wilson(32,40),[c,d]=ctx.wilsonEff(32,40,10);assert(c<a&&d>b);near(ctx.wilsonEff(32,40,40)[0],a);
+});
+test('bootstrap with no variation falls back to an honest interval',()=>{
+  const r=ctx.bootstrapCI(Array(30).fill(true),'block',4,5000,30);assert.equal(r.degenerate,true);assert(r[0]<.95);near(r[0],ctx.wilson(30,30)[0]);near(r[1],1);
+  const r2=ctx.bootstrapCI(Array(30).fill(true),'block',4,5000,8);assert(r2[0]<r[0]);
+});
+test('moving-block length is raised to the overlap factor',()=>{const old=ctx.state.overlap;ctx.state.overlap=5;assert.equal(ctx.effBlock({bootstrapMode:'block',blockLen:4}),5);assert.equal(ctx.effBlock({bootstrapMode:'block',blockLen:8}),8);assert.equal(ctx.effBlock({bootstrapMode:'iid',blockLen:4}),4);ctx.state.overlap=old;});
+test('incremental walk-forward matches the reference implementation exactly',()=>{
+  seed();for(const mode of ['friday0dte','multi'])for(const expiry of ['7','30'])for(const tw of ['all','26']){nodes.researchMode.value=mode;nodes.expiry.value=expiry;nodes.trainWeeks.value=tw;nodes.regime.value='all';ctx.syncControls();ctx.run();const s=ctx.settings();
+    for(const method of ['equalTail','minWidth'])for(const t of [.5,.8,.95]){const fast=ctx.walkForward(s,t,method),ref=ctx.walkForwardReference(s,t,method);assert(ref.length>0,mode+' sample');assert.equal(JSON.stringify(fast),JSON.stringify(ref),`${mode}/${expiry}/${tw}/${method}/${t}`);}
+    const cal=ctx.calibrationSeries(s);assert.equal(cal.length,6);assert.equal(JSON.stringify(ctx.state.wf),JSON.stringify(ctx.walkForwardReference(s)));}
+  nodes.researchMode.value='friday0dte';nodes.expiry.value='7';nodes.trainWeeks.value='all';ctx.syncControls();ctx.run();
+});
+test('premium-adjusted delta equals forward delta minus BTC premium',()=>{
+  const now=Date.UTC(2026,10,1),F=80000,iv=.5,row=(k,t)=>({instrument_name:`BTC-27NOV26-${k}-${t}`,mark_iv:iv*100,underlying_price:F,estimated_delivery_price:F,bid_price:.01});
+  const rows=[row(70000,'P'),row(80000,'P'),row(80000,'C'),row(90000,'C')],T=(Date.UTC(2026,10,27,8)-now)/(365*DAY);
+  const opt=(chain)=>chain[0].cells,fw=opt(ctx.ivDeltaChain(rows,now,'forward')),pa=opt(ctx.ivDeltaChain(rows,now,'premium'));
+  const sd=iv*Math.sqrt(T),d1=k=>(Math.log(F/k)+.5*iv*iv*T)/sd,d2=k=>d1(k)-sd,call=k=>F*ctx.N(d1(k))-k*ctx.N(d2(k));
+  near(fw.c20.delta,ctx.N(d1(90000)),1e-9);near(pa.c20.delta,ctx.N(d1(90000))-call(90000)/F,1e-9);const put=k=>k*ctx.N(-d2(k))-F*ctx.N(-d1(k));near(pa.p20.delta,ctx.N(d1(70000))-1-put(70000)/F,1e-9);
+  assert(html.includes('id="ivDeltaConvention"')&&html.includes('PUT−CALL SKEW'));
+});
+test('touch buffer can only reduce no-touch and never changes expiry containment',()=>{
+  seed();nodes.researchMode.value='multi';nodes.expiry.value='7';nodes.regime.value='all';nodes.touchBuffer.value='0';ctx.syncControls();ctx.run();const a=ctx.state.records.map(r=>[r.inside,r.noTouch]);
+  nodes.touchBuffer.value='0.5';ctx.run();const b=ctx.state.records.map(r=>[r.inside,r.noTouch]);assert.equal(a.length,b.length);assert(a.every((x,i)=>x[0]===b[i][0]&&(!b[i][1]||x[1])));assert(nodes.researchState.textContent.includes('TOUCH BUFFER 0.50pp'));
+  nodes.touchBuffer.value='0';nodes.researchMode.value='friday0dte';ctx.syncControls();ctx.run();
+});
+test('DVOL source is causal, unit-normalized and optional',()=>{
+  const m=ctx.parseDvol([[Date.UTC(2024,0,1),50,51,49,52],[Date.UTC(2024,0,2),.5,.5,.5,.48],[Date.UTC(2024,0,3),1,1,1,-1],'junk']);assert.equal(m.size,2);near(m.get(Date.UTC(2024,0,1)),.52);near(m.get(Date.UTC(2024,0,2)),.48);
+  ctx.state.dvol={rows:[{ts:Date.UTC(2024,0,1),v:.52},{ts:Date.UTC(2024,0,2),v:.48}],status:'LIVE',error:'',busy:false};
+  near(ctx.preEntryDVOL(Date.UTC(2024,0,2,8)),.52);near(ctx.preEntryDVOL(Date.UTC(2024,0,3)),.48);assert(Number.isNaN(ctx.preEntryDVOL(Date.UTC(2024,0,1,12))));assert(Number.isNaN(ctx.preEntryDVOL(Date.UTC(2024,0,9))));
+  const x={entry:100,expiry:100,entryTs:Date.UTC(2024,0,2,8),expiryTs:Date.UTC(2024,0,2,16)};ctx.state.range={lo:-2,hi:2};const s={...ctx.settings(),historicalVolSource:'dvol',strategy:'strangle',capitalMode:'csp'};near(ctx.historicalDelta(x,s).sigma,.52);assert.equal(ctx.historicalDelta(x,s).source,'Deribit DVOL');
+  const rv={...s,historicalVolSource:'rv30',ivRvMult:1.2};const base={...rv,ivRvMult:1};const d=ctx.historicalDelta({...x,entryTs:ctx.state.daily[200].ts+DAY,expiryTs:ctx.state.daily[200].ts+DAY+8*HOUR},rv),d0=ctx.historicalDelta({...x,entryTs:ctx.state.daily[200].ts+DAY,expiryTs:ctx.state.daily[200].ts+DAY+8*HOUR},base);near(d.sigma,d0.sigma*1.2);
+});
+test('holdout lock records settings and reports when they change',()=>{
+  seed();nodes.researchMode.value='friday0dte';nodes.regime.value='all';ctx.syncControls();ctx.run();stored={};
+  assert.equal(ctx.holdoutLockState(),'none');ctx.localStorage.setItem('btc-vol-lab-holdout-lock-v1',JSON.stringify({sig:ctx.settingsSignature(),at:new Date().toISOString()}));ctx.run();assert.equal(ctx.holdoutLockState(),'locked');assert(nodes.researchState.textContent.includes('HOLDOUT LOCKED'));
+  nodes.lookback.value='4';ctx.run();assert.equal(ctx.holdoutLockState(),'broken');assert(nodes.researchState.textContent.includes('HOLDOUT LOCK BROKEN'));assert(/\d+ SETUPS VIEWED/.test(nodes.researchState.textContent));
+  nodes.lookback.value='all';ctx.localStorage.removeItem('btc-vol-lab-holdout-lock-v1');ctx.run();
+});
+test('exchange cross-check flags diverging closes and ignores unfinished candles',()=>{
+  const local=[{ts:0,close:100},{ts:DAY,close:101}],k=(ts,c,closeTs=ts+DAY-1)=>[ts,0,0,0,String(c),0,closeTs];
+  const ok=ctx.compareCloses(local,[k(0,100.5),k(DAY,101)],DAY);assert.equal(ok.n,2);assert.equal(ctx.integrityVerdict(ok),'OK');
+  const bad=ctx.compareCloses(local,[k(0,95),k(DAY,101)],DAY);assert.equal(ctx.integrityVerdict(bad),'MISMATCH');
+  const future=ctx.compareCloses(local,[k(DAY,50,Date.now()+DAY)],DAY);assert.equal(future.n,0);assert.equal(ctx.integrityVerdict(future),'UNCHECKED');
+  ctx.state.integrity={status:'MISMATCH',daily:bad};ctx.renderDataQuality(ctx.settings());assert(nodes.dataQuality.textContent.includes('CROSS-CHECK FAILED'));ctx.state.integrity=undefined;
+});
+test('content security policy pins the inline script and limits network hosts',()=>{
+  const csp=html.match(/<meta http-equiv="Content-Security-Policy" content="([^"]+)"/);assert(csp,'CSP meta present');const hash=require('node:crypto').createHash('sha256').update(script,'utf8').digest('base64');
+  assert(csp[1].includes(`'sha256-${hash}'`),`CSP script hash is stale; expected 'sha256-${hash}'. Run: node tests/update-csp.cjs`);assert(csp[1].includes("default-src 'none'"));assert(/connect-src 'self'/.test(csp[1]),'local JSON copies must stay loadable');
+  for(const host of [...script.matchAll(/(https|wss):\/\/([a-z0-9.-]+)/g)].map(m=>m[1]+'://'+m[2]))if(!/github\.com|deribit\.com\/education|insights\.deribit/.test(host))assert(csp[1].includes(host),'connect-src missing '+host);
+  assert(script.includes('notebookEscape(r.symbol)'));
 });
 (async()=>{
   await new Promise(r=>setImmediate(r));

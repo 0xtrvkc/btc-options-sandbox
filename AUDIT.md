@@ -75,3 +75,38 @@ This is an engineering/research audit, not a certification of profitability or e
 - Fresh real-browser visual QA could not run locally because this environment has no Chromium executable. DOM/canvas tests exercise every panel; they do not replace browser layout inspection. Earlier browser validation above describes the earlier release.
 
 Reference: [PyBroker bootstrap metrics guide](https://www.pybroker.com/en/latest/notebooks/3.%20Evaluating%20with%20Bootstrap%20Metrics.html).
+
+## Review follow-up — 2026-11-21
+
+Desktop layout is intentional, so phone-layout findings were not acted on. Every other finding from the 2026-11-21 review is addressed below.
+
+| Severity | Finding | Resolution |
+| --- | --- | --- |
+| Medium | Wilson interval used raw N even when trades overlapped (e.g. 30-day expiries on weekly entries), so it was too narrow. | Intervals use an overlap-adjusted effective N. The stats grid shows `OVERLAP / EFFECTIVE N`. |
+| Medium | Effective N used only the lag-1 AR(1) correction. | With overlap factor h > 1, the correction uses a Bartlett (Newey–West) sum to lag h, capped at n ÷ h. With h = 1 it is unchanged. |
+| Medium | The bootstrap interval collapsed to 100–100% when every session had the same outcome. | Falls back to the overlap-adjusted Wilson interval and labels the fallback. |
+| Low | Block length was not tied to overlap. | Moving-block length is raised to at least the overlap factor (containment and scenario bootstraps). |
+| Low | The app's IV-grid deltas differed from Deribit's premium-adjusted deltas without a way to compare. | New `Delta convention` selector: forward (default, consistent with the model) or premium-adjusted (matches Deribit). |
+| Low | SKEW sign was the reverse of the call-minus-put convention. | Renamed `PUT−CALL SKEW`, with the sign explained. |
+| Low | Theta was shown only per day, while 0DTE sessions last 8 hours. | The Greek card shows per day and per hour. |
+| Medium | Repeated tuning could silently contaminate the holdout. | `Holdout protocol` lock in the notebook, plus a setups-viewed counter and lock status in the status line. |
+| Medium | RV-based historical deltas understate market IV. | `IV ÷ RV multiplier` scenario input, plus a `Deribit DVOL` source (March 2021 onward; causal last-completed-day rule). |
+| Low | No-touch from close-only bars is optimistic. | `Intrabar touch buffer (pp)` stress setting (default 0 keeps prior results). High/low fields from upstream are already used when present. |
+| Medium | Walk-forward refiltered and re-sorted the full history for every session, 7 times per change. | One incremental pass serves all 7 targets. It is verified identical to the retained reference implementation; ~830 ms → ~5 ms in the Node harness on real data (776 sessions). |
+| Low | No busy feedback during recalculation; theme and resize ran a full re-render. | `CALCULATING…` state with coalesced changes; theme/resize redraw canvases only. |
+| Medium | Price files load from an unpinned upstream branch with no integrity check. | After loading, the latest completed daily and intraday closes are cross-checked against Binance. A gap above 2% marks data `UNVERIFIED` in the status bar. |
+| Low | No Content-Security-Policy. | A meta CSP with `default-src 'none'`, a SHA-256 hash for the inline script, and an explicit connect-src allowlist. Run `node tests/update-csp.cjs` after any script edit; a regression test fails if the hash is stale. |
+| Low | Bybit symbol was inserted into HTML relying on an upstream regex. | Escaped at render time as well. |
+| Low | CI actions were referenced by mutable tags. | Pinned to commit SHAs (`checkout` v6.1.0, `setup-node` v6.5.0). |
+
+### Validation
+
+- `node tests/audit.test.cjs`: 61 regression groups. New groups cover the overlap factor and effective N, the degenerate bootstrap fallback, block-length floor, walk-forward equivalence (modes × tenors × windows × methods × targets), premium-adjusted delta against closed-form Black-76, touch-buffer monotonicity, DVOL causality and units, holdout lock state, the exchange cross-check, and CSP hash and host coverage.
+- Real Chrome (headless, 1440px, real companion data served locally): no CSP violations and no page errors. A full multi-day recalculation took ~0.56 s, including the busy-state paint; the holdout lock was verified. The Binance cross-check could not reach the network from the test sandbox and correctly reported "unavailable".
+- The Node test harness runs about 10× slower than native V8 for numeric loops. Its timings are relative comparisons, not browser benchmarks.
+
+### Remaining limits
+
+- The data cross-check detects divergence in recent bars only; it cannot certify older history. A signed manifest published by the companion repository would be stronger.
+- DVOL starts in March 2021. Earlier cases show unavailable rather than a guessed value.
+- The holdout lock is a browser-local discipline aid, not a tamper-proof protocol.
