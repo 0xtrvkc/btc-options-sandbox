@@ -75,3 +75,20 @@ This is an engineering/research audit, not a certification of profitability or e
 - Fresh real-browser visual QA could not run locally because this environment has no Chromium executable. DOM/canvas tests exercise every panel; they do not replace browser layout inspection. Earlier browser validation above describes the earlier release.
 
 Reference: [PyBroker bootstrap metrics guide](https://www.pybroker.com/en/latest/notebooks/3.%20Evaluating%20with%20Bootstrap%20Metrics.html).
+
+## Calculation and desktop UX fixes — 2026-11-24
+
+| Area | Finding | Resolution |
+| --- | --- | --- |
+| Scenario credit | Default 2% credit was about 10.8× the app's own Black–Scholes value (0.185% for ±2%, 8h, 55% IV), inflating every P&L metric. | Default credit = model fair value of the short legs (net of wings in defined-risk mode). Manual credits show their multiple of fair value and warn above 2×. |
+| CSP | KPIs, heatmap, walk-forward and report scored upside moves as failures. | One-sided scoring (expiry ≥ put strike) everywhere in CSP mode; walk-forward and auto-range use a one-sided lower quantile. |
+| Regime | Panel 09 ranked RV30 against full history while the filter used a trailing year (35th vs 79th percentile on the audit date). | Both use the trailing-year percentile; labels and help text updated. |
+| Panels 16/17 | Always computed Friday 00→08 over all history. | Follow the active preset, weekday, lookback and start date; weekday comparison generalised. |
+| Panel 13 | Hard-coded to Friday in custom intraday mode. | Uses the selected weekday; renamed Entry-Time Sensitivity. |
+| Greeks | Θ/day exceeded the whole option value for 8h tenors. | Θ per hour for sub-day tenors; signed money formatting. |
+| Holdout | Three differently defined "holdout" figures. | One shared split (`holdoutSplit`); panel 17 shows fitted-range and applied-range holdout on the split the report uses. |
+| Sample | Default lookback included stale 2012 data. | Default lookback since 2019; stale-price years flagged in the data strip. |
+| Smaller | Asymmetric live distances, signed unsigned values, Friday-only labels, no range rescale between presets, rich/cheap carry verdict, pre-entry live-strike tenor. | All corrected; live Δ strikes before entry use the session tenor. |
+| UX | Very long page, tiny type, hidden start-date filter, silent hour resets, overwritten delta inputs, heatmap scroll-jump, overlapping payoff labels, no hover values or export. | Sectioned layout, 11–13px type with SF fonts, start date in sidebar, invalid hours disabled, keyboard-accessible heatmap, rebuilt payoff chart, chart hover, CSV export, persisted theme, collapsible notes. |
+
+Validation: `node tests/audit.test.cjs` — 58 regression groups pass, including new checks for each fix above. Headless Chrome at 1512 px confirmed fair credit 0.185% and no page errors across all seven sections in light and dark themes. Live Deribit/Bybit/Binance feeds were unreachable from the test environment and were exercised in fallback state only.

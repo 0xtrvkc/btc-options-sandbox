@@ -150,7 +150,7 @@ test('live strikes plan matches the session expiry, anchors to spot, prices cred
   const now=Date.UTC(2026,10,5,9,15),F=80050,strikes=Array.from({length:49},(_,i)=>74000+i*250);
   withLiveSession(now,()=>{
     setChain(now,liveChain(now,'6NOV26',F,strikes));
-    const s=ctx.settings(),p=ctx.ivLivePlan(s),T=(Date.UTC(2026,10,6,8)-now)/(365*DAY);
+    const s=ctx.settings(),p=ctx.ivLivePlan(s),T=8/8760;assert.equal(p.tenorHours,8,'pre-entry deltas use the 8h session tenor, not time to expiry');
     assert(p.valid,p.reason);assert.equal(p.expiryTs,Date.UTC(2026,10,6,8));assert.equal(p.anchor,80000);assert.equal(p.target,20);
     assert(p.put.strike<80000&&p.call.strike>80000);near(p.lo,(p.put.strike/80000-1)*100,1e-9);near(p.hi,(p.call.strike/80000-1)*100,1e-9);
     assert(Math.abs(p.put.delta+.2)<.05&&Math.abs(p.call.delta-.2)<.05);
@@ -228,11 +228,11 @@ test('carry vol context compares Deribit ATM IV nearest 7 days with the HAR-like
   const ivRows=iv=>({rows:[{expiryTs:Date.UTC(2026,10,6,8),days:1,cells:{atm:{iv:.09}}},{expiryTs:Date.UTC(2026,10,12,8),days:7,cells:{atm:{iv}}},{expiryTs:Date.UTC(2026,11,25,8),days:50,cells:{atm:{iv:.9}}},{expiryTs:Date.UTC(2026,10,13,8),days:8,cells:{}}],asOf:CARRY_NOW,count:1,status:'LIVE',error:'',busy:false});
   const curve=ctx.carryCurve(bybitTickers(),bybitInstruments(),CARRY_NOW),perp=bybitTickers().find(t=>t.symbol==='BTCUSDT');
   ctx.state.carry={rows:curve.rows,best:curve.best,bestMark:curve.bestMark,funding:ctx.carryFunding(perp,[{fundingRate:'0.0001'}],480),asOf:CARRY_NOW,count:9,status:'LIVE',error:'',busy:false};
-  for(const [mult,word] of [[1.2,'Vol selling paid'],[.8,'Vol selling underpaid'],[1,'Vol selling roughly fair']]){
+  for(const mult of [1.2,.8,1]){
     ctx.state.ivDelta=ivRows(har*mult/100);const v=ctx.carryVol();near(v.iv,har*mult,1e-9);near(v.ratio,mult,1e-9);assert(v.src.includes('Nov 12'),v.src);
-    ctx.renderCarry();assert(nodes.carryVerdict.textContent.includes(word+' vs forecast RV'),nodes.carryVerdict.textContent);assert(nodes.carryLines.innerHTML.includes(word+': IV/forecast-RV '+mult.toFixed(2)+'×'));}
-  ctx.state.ivDelta={rows:[],asOf:NaN,count:0,status:'NOT LOADED',error:'',busy:false};const manual=ctx.carryVol();assert.equal(manual.src,'manual IV input');near(manual.iv,ctx.settings().iv*100,1e-9);ctx.renderCarry();assert(nodes.carryVerdict.textContent.includes('× on manual IV)'),nodes.carryVerdict.textContent);ctx.state.ivDelta=ivRows(har/100);ctx.renderCarry();assert(!nodes.carryVerdict.textContent.includes('manual IV'));ctx.state.ivDelta={rows:[],asOf:NaN,count:0,status:'NOT LOADED',error:'',busy:false};
-  const daily=ctx.state.daily;ctx.state.daily=[];try{const none=ctx.carryVol();assert(Number.isNaN(none.har));assert(Number.isNaN(none.ratio));ctx.renderCarry();assert(nodes.carryLines.innerHTML.includes('Vol comparison unavailable'));assert(!nodes.carryVerdict.textContent.includes('Vol selling'));assert(!nodes.carryLines.innerHTML.includes('NaN'));}finally{ctx.state.daily=daily;}
+    ctx.renderCarry();assert(nodes.carryVerdict.textContent.includes('IV / forecast RV '+mult.toFixed(2)+'×'),nodes.carryVerdict.textContent);assert(!/paid|underpaid|roughly fair/.test(nodes.carryVerdict.textContent+nodes.carryLines.innerHTML),'no rich/cheap verdict');assert(nodes.carryLines.innerHTML.includes('IV/forecast-RV '+mult.toFixed(2)+'×'));}
+  ctx.state.ivDelta={rows:[],asOf:NaN,count:0,status:'NOT LOADED',error:'',busy:false};const manual=ctx.carryVol();assert.equal(manual.src,'manual IV input');near(manual.iv,ctx.settings().iv*100,1e-9);ctx.renderCarry();assert(nodes.carryVerdict.textContent.includes('× (manual IV)'),nodes.carryVerdict.textContent);ctx.state.ivDelta=ivRows(har/100);ctx.renderCarry();assert(!nodes.carryVerdict.textContent.includes('manual IV'));ctx.state.ivDelta={rows:[],asOf:NaN,count:0,status:'NOT LOADED',error:'',busy:false};
+  const daily=ctx.state.daily;ctx.state.daily=[];try{const none=ctx.carryVol();assert(Number.isNaN(none.har));assert(Number.isNaN(none.ratio));ctx.renderCarry();assert(nodes.carryLines.innerHTML.includes('Vol comparison unavailable'));assert(!nodes.carryVerdict.textContent.includes('IV / forecast RV'));assert(!nodes.carryLines.innerHTML.includes('NaN'));}finally{ctx.state.daily=daily;}
 });
 test('carry panel renders the curve, best star, funding line and failure states',()=>{
   const curve=ctx.carryCurve(bybitTickers(),bybitInstruments(),CARRY_NOW),perp=bybitTickers().find(t=>t.symbol==='BTCUSDT');
@@ -256,6 +256,38 @@ test('carry panel renders the curve, best star, funding line and failure states'
 test('carry panel exists with hover help and never alters historical records',()=>{
   assert(html.includes('id="carryPanel"'));assert(html.includes('02D / CARRY MONITOR'));assert(ctx.HELP_TEXT['CARRY MONITOR']);
   seed();nodes.researchMode.value='friday0dte';nodes.regime.value='all';ctx.syncControls();ctx.run();const before=JSON.stringify(ctx.state.records.map(r=>[r.lo,r.hi,r.inside]));ctx.state.carry={rows:[],best:null,funding:null,asOf:NaN,count:0,status:'NOT LOADED',error:'',busy:false};ctx.renderCarry();ctx.run();assert.equal(JSON.stringify(ctx.state.records.map(r=>[r.lo,r.hi,r.inside])),before);
+});
+test('fix 1: default credit is the Black–Scholes fair value of the modeled legs',()=>{
+  const base={hours:8,strategy:'strangle',lo:-2,hi:2,capitalMode:'covered',wing:5,iv:.55,r:0},fair=ctx.fairCreditPct(base);near(fair,.1853,.001);
+  assert(ctx.fairCreditPct({...base,capitalMode:'csp'})<fair);assert(ctx.fairCreditPct({...base,capitalMode:'defined'})<fair);near(ctx.fairCreditPct({...base,strategy:'straddle'}),.8*55*Math.sqrt(8/8760),.03);
+  seed();resetResearchControls();nodes.creditAuto.checked=true;ctx.syncControls();ctx.run();const s=ctx.settings();near(s.credit,s.fairCredit);assert(s.credit<.5);assert(nodes.creditFairNote.textContent.includes('Model fair value'));
+  nodes.creditAuto.checked=false;assert(Number(nodes.creditPct.value)<.5,'unticking starts from the fair value');nodes.creditPct.value='2';nodes.creditPct.disabled=false;ctx.run();assert.equal(ctx.settings().credit,2);assert(nodes.creditFairNote.textContent.includes('× fair'));
+});
+test('fix 2: CSP containment is one-sided in KPIs, records and walk-forward',()=>{
+  seed();resetResearchControls();nodes.capitalMode.value='csp';ctx.syncControls();ctx.run();const a=ctx.state.records;assert(a.length>0);
+  assert(a.every(x=>x.inside===(x.ret>=ctx.state.range.lo)));assert(a.every(x=>!x.upper));assert(nodes.kBreach.textContent.endsWith('—'));assert(ctx.state.wf.every(x=>x.wfHi===Infinity));
+  resetResearchControls();ctx.syncControls();ctx.run();
+});
+test('fix 3: panel 09 regime uses the same trailing-year percentile as the filter',()=>{
+  seed();resetResearchControls();ctx.syncControls();ctx.run();ctx.renderVol();const p=ctx.state.features.at(-1).rvPct;assert(Number.isFinite(p));assert(nodes.volGrid.innerHTML.includes((p*100).toFixed(1)+'%'));assert(ctx.HELP_TEXT['RV30 PCTL'].includes('trailing one year'));
+});
+test('fix 4 and 7: panel 17 follows the active session and shares the report holdout split',()=>{
+  seed();resetResearchControls();ctx.syncControls();ctx.run();const fri=nodes.holdoutTailGrid.innerHTML,s=ctx.settings(),split=ctx.holdoutSplit(ctx.state.baseEval,s.holdoutPct),m=ctx.reportStatistics(s);
+  assert.equal(m.test.length,split.test.length);assert.equal(m.train.length,split.train.length);assert(fri.includes(`${split.train.length} / ${split.test.length}`));
+  nodes.researchMode.value='weekend';ctx.syncControls();ctx.run();assert.notEqual(nodes.holdoutTailGrid.innerHTML,fri);assert(nodes.holdoutTailGrid.innerHTML.includes('not applicable to the weekend preset'));
+  resetResearchControls();ctx.syncControls();ctx.run();
+});
+test('fix 5: entry-time sensitivity uses the selected weekday',()=>{
+  seed();resetResearchControls();nodes.researchMode.value='intraday';nodes.weekday.value='1';nodes.entryHour.value='0';nodes.expiryHour.value='8';ctx.syncControls();ctx.run();
+  assert(nodes.sensitivityLabel.textContent.startsWith('MON'));const rate=ctx.state.records.filter(x=>x.inside).length/ctx.state.records.length;assert(nodes.sensitivityBody.innerHTML.includes((rate*100).toFixed(1)+'%'));
+  nodes.weekday.value='5';resetResearchControls();ctx.syncControls();ctx.run();
+});
+test('fix 6: sub-day tenors show theta per hour with signed money formatting',()=>{
+  seed();resetResearchControls();ctx.syncControls();ctx.run();ctx.renderModel(ctx.settings());assert.equal(nodes.gThetaLabel.textContent,'NET Θ / HOUR');assert(!nodes.gVega.textContent.includes('$-'));
+});
+test('fix 8: default lookback starts in 2019 and stale years are detected',()=>{
+  assert.equal(ctx.lookbackCutoff({lookback:'since2019'},Date.UTC(2026,0,1)),Date.UTC(2019,0,1));assert.equal(ctx.lookbackCutoff({lookback:'all'},0),-Infinity);near(ctx.lookbackCutoff({lookback:'2'},Date.UTC(2026,0,1)),Date.UTC(2026,0,1)-2*365.25*DAY);
+  assert(html.includes('<option value="since2019" selected>'));const flat=Array.from({length:300},(_,i)=>({ts:Date.UTC(2012,0,1)+i*HOUR,close:i<200?5:5+i}));assert.equal(JSON.stringify(ctx.staleYears(flat)),"[2012]");
 });
 (async()=>{
   await new Promise(r=>setImmediate(r));

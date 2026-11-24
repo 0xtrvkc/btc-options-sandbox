@@ -17,6 +17,10 @@ The project is intentionally designed to answer a narrower and more defensible q
 
 It does **not** reconstruct historical option premiums, historical IV, or observed historical option P&L. Scenario P&L is clearly labeled and applies one user-supplied hypothetical credit to every historical session.
 
+## Interface
+
+The research terminal is a desktop layout with a macOS-style glass theme (light and dark, following the system setting until you toggle it; the choice is remembered). The sidebar holds every control. The main area is split into seven sections — Desk, Market, Evidence, Validation, Scenario P&L, Cases and Report — so each view stays short; the headline KPIs stay visible in all of them. Canvas charts show values on hover, and Cases, the calendar table and the explorer export to CSV.
+
 ## Audited research workflow
 
 See [AUDIT.md](AUDIT.md) for verified findings, fixes, tests, and remaining limitations.
@@ -55,6 +59,8 @@ The goal is not to prove that selling options is profitable. The goal is to unde
 ## Main features
 
 ### Friday 0DTE default
+
+Defaults: lookback starts in 2019 (the 2012–2016 hourly data is thin; in 2012 about half of hourly closes never change), and the shared hypothetical credit is the Black–Scholes fair value of the modeled short legs at the manual IV and session tenor. Untick **Model fair value** to type your own credit; the sidebar then shows it as a multiple of fair value and warns above 2×.
 
 The default preset studies a Friday session from **00:00 UTC to 08:00 UTC**.
 
@@ -424,8 +430,13 @@ In the repository:
 
 ```text
 btc-options-sandbox/
-├── index.html
-└── README.md
+├── index.html                       single-file app
+├── README.md
+├── AUDIT.md                         audit findings and fixes
+├── tests/
+│   ├── audit.test.cjs               Node regression suite
+│   └── layout.html                  manual layout harness
+└── .github/workflows/research-checks.yml
 ```
 
 Historical JSON is intentionally kept in the companion data repository instead of being duplicated here.
